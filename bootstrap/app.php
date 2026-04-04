@@ -11,7 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+         $middleware->alias([
+        'has.profile' => \App\Http\Middleware\CheckProfile::class,
+        'profile.exists' => \App\Http\Middleware\RedirectIfProfileExists::class,
+    ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
