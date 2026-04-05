@@ -192,7 +192,7 @@
                     <label for="photo">Profile Photo</label>
 
                     <div class="photo-preview" id="photoPreviewWrapper">
-                        <img src="https://via.placeholder.com/96x96.png?text=Photo" alt="Profile preview" id="photoPreviewImage">
+                        <img src="https://media.istockphoto.com/id/2171382633/vector/user-profile-icon-anonymous-person-symbol-blank-avatar-graphic-vector-illustration.jpg?s=612x612&w=0&k=20&c=ZwOF6NfOR0zhYC44xOX06ryIPAUhDvAajrPsaZ6v1-w=" alt="Profile preview" id="photoPreviewImage">
                         <p id="photoPreviewText">Choose a profile photo to make your account feel more personal.</p>
                     </div>
 

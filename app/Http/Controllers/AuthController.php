@@ -56,6 +56,7 @@ class AuthController extends Controller
                 Otp::create([
                     'phone' => $formatted,
                     'code' => $otpCode,
+                     'is_used' => false,
                     'expires_at' => now()->addMinutes(3),
                 ]);
             }

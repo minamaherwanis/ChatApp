@@ -195,6 +195,121 @@
             margin-bottom: 1rem;
         }
 
+        .stories-section {
+            width: 100%;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .stories-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+
+        .stories-container {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding-bottom: 0.5rem;
+        }
+
+        .stories-container::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .stories-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .stories-container::-webkit-scrollbar-thumb {
+            background: rgba(79, 162, 255, 0.25);
+            border-radius: 2px;
+        }
+
+        .stories-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(79, 162, 255, 0.4);
+        }
+
+        .story-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            text-decoration: none;
+            transition: transform 0.2s ease;
+        }
+
+        .story-item:hover {
+            transform: scale(1.05);
+        }
+
+        .story-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4fa2ff 0%, #1e5ba5 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #f8fbff;
+            font-size: 1.5rem;
+            border: 3px solid rgba(79, 162, 255, 0.3);
+            transition: border-color 0.2s ease;
+        }
+
+        .story-item:hover .story-avatar {
+            border-color: rgba(79, 162, 255, 0.7);
+        }
+
+        .story-name {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            max-width: 72px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .add-story-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s ease;
+        }
+
+        .add-story-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .add-story-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: rgba(79, 162, 255, 0.15);
+            border: 2px dashed rgba(79, 162, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        .add-story-name {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
         @media (max-width: 900px) {
             .chat-container {
                 grid-template-columns: 1fr;
@@ -234,77 +349,6 @@
 @endsection
 
 @section('content')
-    <div class="chat-container">
-        <!-- Sidebar -->
-        <aside class="chat-sidebar">
-            <div class="chat-header">
-                <h1>Chats</h1>
-                <div class="chat-header-actions">
-                    <button class="icon-button" title="Start new chat">✏️</button>
-                    <button class="icon-button" title="More options">⋯</button>
-                </div>
-            </div>
+ <livewire:chat />
 
-            <div class="search-box">
-                <input type="text" placeholder="Search chats..." id="searchInput">
-            </div>
-
-            <div class="chat-list">
-                <!-- Sample chat items -->
-                <a href="#" class="chat-item active">
-                    <div class="chat-avatar">JD</div>
-                    <div class="chat-preview">
-                        <div class="chat-name">John Doe</div>
-                        <div class="chat-message">That sounds great! Let's meet...</div>
-                    </div>
-                    <div class="chat-time">2m</div>
-                </a>
-
-                <a href="#" class="chat-item">
-                    <div class="chat-avatar" style="background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);">SD</div>
-                    <div class="chat-preview">
-                        <div class="chat-name">Sarah Davis</div>
-                        <div class="chat-message">See you tomorrow!</div>
-                    </div>
-                    <div class="chat-time">1h</div>
-                </a>
-
-                <a href="#" class="chat-item">
-                    <div class="chat-avatar" style="background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);">MR</div>
-                    <div class="chat-preview">
-                        <div class="chat-name">Mike Roberts</div>
-                        <div class="chat-message">Thanks for the update!</div>
-                    </div>
-                    <div class="chat-time">3h</div>
-                </a>
-
-                <a href="#" class="chat-item">
-                    <div class="chat-avatar" style="background: linear-gradient(135deg, #ffd43b 0%, #fab005 100%);">ET</div>
-                    <div class="chat-preview">
-                        <div class="chat-name">Emma Thompson</div>
-                        <div class="chat-message">Ready for the meeting?</div>
-                    </div>
-                    <div class="chat-time">5h</div>
-                </a>
-
-                <a href="#" class="chat-item">
-                    <div class="chat-avatar" style="background: linear-gradient(135deg, #a78bfa 0%, #9370db 100%);">CJ</div>
-                    <div class="chat-preview">
-                        <div class="chat-name">Chris Johnson</div>
-                        <div class="chat-message">Perfect! Looking forward to it</div>
-                    </div>
-                    <div class="chat-time">1d</div>
-                </a>
-            </div>
-        </aside>
-
-        <!-- Main content -->
-        <div class="chat-content">
-            <div class="empty-state">
-                <div class="empty-state-icon">💬</div>
-                <h2>Select a chat</h2>
-                <p>Choose a conversation from the sidebar to start messaging. Or create a new chat to connect with friends.</p>
-            </div>
-        </div>
-    </div>
 @endsection

@@ -30,7 +30,12 @@ class User extends Authenticatable
         ];
     }
     public function profile()
-{
-    return $this->hasOne(Profile::class);
-}
+    {
+        return $this->hasOne(Profile::class);
+    }
+    public function chats()
+    {
+        return Chat::where('user_one_id', $this->id)
+            ->orWhere('user_two_id', $this->id);
+    }
 }

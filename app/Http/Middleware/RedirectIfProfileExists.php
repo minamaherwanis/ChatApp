@@ -19,7 +19,6 @@ class RedirectIfProfileExists
          $user = Auth::user();
 
         if ($user && $user->profile) {
-            // لو عنده بروفايل، اديه redirection لصفحة تانية
             return redirect('/home')->with('info', 'You already completed your profile!');
         }
 
