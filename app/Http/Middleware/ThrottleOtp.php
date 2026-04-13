@@ -19,7 +19,7 @@ class ThrottleOtp
      */
     public function handle(Request $request, Closure $next): Response
     {
-        dd($request->ip());
+        
         $key = 'otp_attempts_' . $request->ip();
 
         $attempts = cache()->get($key, 0);

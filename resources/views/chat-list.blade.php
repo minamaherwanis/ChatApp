@@ -4,6 +4,7 @@
 
 @section('styles')
     <link rel="stylesheet" href="{{ asset('css/main.css') }}">
+    
     <style>
         * {
             margin: 0;

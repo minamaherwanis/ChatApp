@@ -11,7 +11,7 @@ class Chat extends Model
 
     protected $casts = [
         'last_message_at' => 'datetime',
-    ];  
+    ];
     public function messages()
     {
         return $this->hasMany(Message::class);
@@ -32,10 +32,10 @@ class Chat extends Model
     {
         $chat = self::where(function ($query) use ($userOneId, $userTwoId) {
             $query->where('user_one_id', $userOneId)
-                  ->where('user_two_id', $userTwoId);
+                ->where('user_two_id', $userTwoId);
         })->orWhere(function ($query) use ($userOneId, $userTwoId) {
             $query->where('user_one_id', $userTwoId)
-                  ->where('user_two_id', $userOneId);
+                ->where('user_two_id', $userOneId);
         })->first();
 
         if (!$chat) {
@@ -53,7 +53,7 @@ class Chat extends Model
 
     public function getOtheruser()
     {
-       return auth()->id() === $this->user_one_id ? $this->userTwo : $this->userOne;
+        return auth()->id() === $this->user_one_id ? $this->userTwo : $this->userOne;
     }
 
     public function lastMessage()
@@ -64,17 +64,36 @@ class Chat extends Model
     public function getLastMessageFormattedAttribute()
     {
         $lastMessageAt = Carbon::parse($this->attributes['last_message_at']);
-        
-       if ($lastMessageAt->isToday()) {
+
+        if ($lastMessageAt->isToday()) {
             return $lastMessageAt->format('g:i A');
         } elseif ($lastMessageAt->isYesterday()) {
             return 'Yesterday';
         } else {
             return $lastMessageAt->format('M d, Y');
-        }   
+        }
     }
     public function isChatContainerUser($userId)
     {
-        return $this->user_one_id === $userId ||$this->user_two_id  === $userId ;
+        return $this->user_one_id === $userId || $this->user_two_id  === $userId;
     }
+
+    public function loadMessages($limit = 10)
+    {
+        return $this->messages()
+            ->latest()
+            ->take($limit)
+            ->get()->reverse();
+    }
+
+    public function unreadMessages()
+    {
+        return $this->messages()->where('sender_id', '!=', auth()->id())->where('is_read', false);
+    }
+
+    public function markMessagesAsRead()
+    {
+        $this->unreadMessages()->update(['is_read' => true]);
+    }
+
 }

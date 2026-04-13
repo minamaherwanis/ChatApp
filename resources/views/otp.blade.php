@@ -102,7 +102,7 @@
 
             <form class="login-form" action="{{ route('login.otp') }}" method="POST" id="otpForm">
                 @csrf
-                <input type="hidden" name="g-recaptcha-response" id="recaptcha_token">
+                {{-- <input type="hidden" name="g-recaptcha-response" id="recaptcha_token"> --}}        
                 <input type="hidden" name="code" id="otp_code">
                 <div class="otp-code-grid">
                     <input class="otp-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
@@ -251,12 +251,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ===== reCAPTCHA =====
-    grecaptcha.ready(function() {
-        grecaptcha.execute("{{ env('RECAPTCHA_SITE_KEY') }}", { action: 'submit' })
-            .then(function(token) {
-                document.getElementById('recaptcha_token').value = token;
-            });
-    });
+    // grecaptcha.ready(function() {
+    //     grecaptcha.execute("{{ env('RECAPTCHA_SITE_KEY') }}", { action: 'submit' })
+    //         .then(function(token) {
+    //             document.getElementById('recaptcha_token').value = token;
+    //         });
+    // });
 });
 </script>
 @endsection

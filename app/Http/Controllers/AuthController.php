@@ -94,7 +94,7 @@ class AuthController extends Controller
 
     public function confirmotp(Request $request)
     {
-        $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+       /* $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
             'secret' => env('RECAPTCHA_SECRET_KEY'),
             'response' => $request->input('g-recaptcha-response'),
             'remoteip' => $request->ip(),
@@ -105,7 +105,7 @@ class AuthController extends Controller
         if (!($result['success'] ?? false)) {
             return back()->withErrors(['captcha' => 'Captcha failed']);
         }
-
+*/
         $this->throttleOtp($request);
         $otp = Otp::where('phone', session('auth_phone'))->first();
 
@@ -134,11 +134,13 @@ class AuthController extends Controller
             'is_used' => true,
             'attempts' => 0
         ]);
-        $user = User::create(
+      if (!$user = User::where('phone', session('auth_phone'))->first()) {
+           $user = User::create(
             ['phone' => session('auth_phone')],
             ['phone_verified_at' => now()]
 
         );
+        }
         Auth::login($user);
         return redirect()->route('home');
     }
