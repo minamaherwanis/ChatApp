@@ -1,4 +1,5 @@
 <div class="chat-container">
+
     <!-- Sidebar -->
     <aside class="chat-sidebar">
         <div class="chat-header">
@@ -8,10 +9,234 @@
                     {{ $viewmode === 'chats' ? '➕' : '💬' }}
                 </button>
                 <button class="icon-button" title="More options">⋯</button>
-                
+
             </div>
         </div>
 
+        {{-- ==================== STORY BAR ==================== --}}
+        <div class="stories-bar">
+
+            {{-- My Story --}}
+            <div class="story-item" wire:click="handleMyStoryClick">
+                <div
+                    class="story-avatar-wrapper {{ $myStories->count() ? ($myStorySeen ? 'seen' : 'unseen') : 'no-story' }}">
+                    @if (auth()->user()->profile->avatar)
+                        <img src="{{ asset('storage/' . auth()->user()->profile->avatar) }}" class="story-avatar">
+                    @else
+                        <div class="story-avatar-placeholder">
+                            {{ strtoupper(substr(auth()->user()->profile->username, 0, 2)) }}
+                        </div>
+                    @endif
+                    @if (!$myStories->count())
+                        <div class="story-add-badge">+</div>
+                    @endif
+                </div>
+                <span class="story-label">My Status</span>
+            </div>
+
+            {{-- Other Users Stories --}}
+            @foreach ($storyUsers as $storyUser)
+                <div class="story-item" wire:click="openUserStory({{ $storyUser->user_id }})">
+                    <div class="story-avatar-wrapper {{ $storyUser->all_seen ? 'seen' : 'unseen' }}">
+                        @if ($storyUser->avatar)
+                            <img src="{{ asset('storage/' . $storyUser->avatar) }}" class="story-avatar">
+                        @else
+                            <div class="story-avatar-placeholder">
+                                {{ strtoupper(substr($storyUser->username, 0, 2)) }}
+                            </div>
+                        @endif
+                    </div>
+                    <span class="story-label">{{ $storyUser->username }}</span>
+                </div>
+            @endforeach
+
+        </div>
+
+        {{-- ==================== MY STORY OPTIONS MODAL ==================== --}}
+        @if ($showMyStoryOptions)
+            <div class="story-modal-overlay" wire:click.self="$set('showMyStoryOptions', false)">
+                <div class="story-options-sheet">
+                    <div class="story-options-handle"></div>
+                    <button class="story-option-btn" wire:click="openAddStory">
+                        <span class="story-option-icon">📷</span>
+                        <div>
+                            <div class="story-option-title">Add New Story</div>
+                            <div class="story-option-sub">Share a new photo or moment</div>
+                        </div>
+                    </button>
+                    <button class="story-option-btn" wire:click="viewMyOwnStories">
+                        <span class="story-option-icon">👁</span>
+                        <div>
+                            <div class="story-option-title">View My Stories</div>
+                            <div class="story-option-sub">{{ $myStories->count() }} active
+                                {{ Str::plural('story', $myStories->count()) }}</div>
+                        </div>
+                    </button>
+                    <button class="story-option-btn cancel" wire:click="$set('showMyStoryOptions', false)">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        @endif
+
+        {{-- ==================== ADD STORY MODAL ==================== --}}
+        @if ($showAddStory)
+            <div class="story-modal-overlay" wire:click.self="closeAddStory">
+                <div class="add-story-modal">
+                    <div class="add-story-header">
+                        <h3>New Story</h3>
+                        <button wire:click="closeAddStory" class="close-modal-btn">✕</button>
+                    </div>
+
+                    {{-- Image Preview or Upload Area --}}
+                    @if ($storyImage)
+                        <div class="story-image-preview-wrap">
+                            <img src="{{ $storyImage->temporaryUrl() }}" class="story-preview-img">
+                            <button class="change-image-btn" wire:click="$set('storyImage', null)">Change Photo</button>
+                        </div>
+                    @else
+                        <label for="storyFileInput" class="story-upload-area">
+                            <div class="upload-icon">📷</div>
+                            <div class="upload-text">Click to choose a photo</div>
+                            <div class="upload-sub">JPG, PNG, GIF up to 5MB</div>
+                        </label>
+                        <input type="file" id="storyFileInput" accept="image/*" style="display:none;"
+                            wire:model="storyImage">
+                    @endif
+
+                    {{-- Description --}}
+                    <div class="story-desc-wrap">
+                        <textarea wire:model="storyText" class="story-desc-input" placeholder="Add a description... (optional)" maxlength="160"
+                            rows="3"></textarea>
+                        <div class="story-char-count {{ strlen($storyText) > 140 ? 'near-limit' : '' }}">
+                            {{ strlen($storyText) }}/160
+                        </div>
+                    </div>
+
+                    @error('storyImage')
+                        <div class="story-error">{{ $message }}</div>
+                    @enderror
+                    @error('storyText')
+                        <div class="story-error">{{ $message }}</div>
+                    @enderror
+
+                    <div class="add-story-actions">
+                        <button class="story-cancel-btn" wire:click="closeAddStory">Cancel</button>
+                        <button class="story-upload-btn {{ !$storyImage ? 'disabled' : '' }}" wire:click="uploadStory"
+                            {{ !$storyImage ? 'disabled' : '' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            Share Story
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- ==================== STORY VIEWER OVERLAY ==================== --}}
+        @if ($viewerOpen && $viewerStories->count())
+            <div class="viewer-overlay" id="storyViewerOverlay">
+
+                {{-- Progress Bars --}}
+                <div class="viewer-progress-row">
+                    @foreach ($viewerStories as $i => $story)
+                        <div class="viewer-progress-bar">
+                            <div class="viewer-progress-fill" id="prog-{{ $i }}"
+                                style="width: {{ $i < $viewerIndex ? '100%' : '0%' }}"></div>
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- Header --}}
+                <div class="viewer-header">
+                    <div class="viewer-user-info">
+                        @if ($viewerUser && $viewerUser->profile->avatar)
+                            <img src="{{ asset('storage/' . $viewerUser->profile->avatar) }}" class="viewer-avatar">
+                        @else
+                            <div class="viewer-avatar-placeholder">
+                                {{ strtoupper(substr($viewerUser?->profile?->username ?? 'U', 0, 2)) }}
+                            </div>
+                        @endif
+                        <div>
+                            <div class="viewer-username">{{ $viewerUser?->profile?->username }}</div>
+                            <div class="viewer-time">
+                                {{ $viewerStories[$viewerIndex]->created_at->diffForHumans() }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="viewer-header-actions">
+                        @if ($viewerIsOwn)
+                            <button class="viewer-delete-btn" wire:click="deleteCurrentStory" title="Delete story">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6" />
+                                    <path
+                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                </svg>
+                            </button>
+                        @endif
+                        <button class="viewer-close-btn" wire:click="closeStoryViewer">✕</button>
+                    </div>
+                </div>
+
+                {{-- Story Image --}}
+                <div class="viewer-body">
+                    {{-- Tap Zones --}}
+                    <div class="tap-left" wire:click="prevViewerStory"></div>
+                    <div class="tap-right" wire:click="nextViewerStory"></div>
+
+                    <img src="{{ asset('storage/' . $viewerStories[$viewerIndex]->media) }}" class="viewer-image"
+                        id="viewerImage">
+
+                    @if ($viewerStories[$viewerIndex]->text)
+                        <div class="viewer-caption">{{ $viewerStories[$viewerIndex]->text }}</div>
+                    @endif
+                </div>
+
+                {{-- Footer - Owner Only: Views --}}
+                @if ($viewerIsOwn)
+                    <div class="viewer-footer-owner">
+                        <div class="viewer-views-info">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            <span class="views-click"
+                                wire:click="openViewsSheet({{ $viewerStories[$viewerIndex]->id }})">{{ $viewerStories[$viewerIndex]->views->count() ?? 0 }}
+                                views</span>
+                        </div>
+                    </div>
+                @endif
+                @if ($showViewsSheet)
+                    <div class="bottom-sheet-overlay" wire:click="closeViewsSheet"></div>
+
+                    <div class="bottom-sheet">
+                        <div class="sheet-header">
+                            <h3>Views</h3>
+                            <button wire:click="closeViewsSheet">✕</button>
+                        </div>
+
+                        <div class="sheet-body">
+                            @forelse($storyViewers as $view)
+                                <div class="viewer-item">
+                                    <img
+                                        src="{{ $view->profile->avatar ? asset('storage/' . $view->profile->avatar) : asset('default.png') }}" />
+                                    <div>
+                                        <div class="name">{{ $view->profile->name }}</div>
+                                        <div class="time">{{ $view->viewed_at->diffForHumans() }}</div>
+                                    </div>
+                                </div>
+                            @empty
+                                <p>No views yet</p>
+                            @endforelse
+                        </div>
+                    </div>
+                @endif
+            </div>
+        @endif
 
         <div class="search-box">
             <input type="text" placeholder="Search chats..." id="searchInput" wire:model.live="search">
@@ -42,7 +267,7 @@
                         </div>
                         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
                             <div class="chat-time">{{ $chat->last_message_formatted }}</div>
-                             
+
                             @if ($chat->unreadMessages()->count() > 0)
                                 <span class="unreadstyle">{{ $chat->unreadMessages()->count() }}</span>
                             @endif
@@ -264,8 +489,821 @@
             </div>
         @endif
     </div>
+
+
 </div>
+
+@if ($storyImage)
+    <div class="story-preview-overlay">
+        <div class="story-preview-box">
+
+            <img src="{{ $storyImage->temporaryUrl() }}" class="preview-img">
+
+            <div class="preview-actions">
+                <button class="cancel-btn" wire:click="$set('storyImage', null)">
+                    Cancel
+                </button>
+
+                <button class="send-story" wire:click="uploadStory">
+                    Upload
+                </button>
+            </div>
+
+        </div>
+    </div>
+@endif
 <style>
+    .bottom-sheet-overlay {
+
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+    }
+
+    .bottom-sheet {
+        position: fixed;
+        bottom: 50%;
+        left: 50%;
+
+        width: 50%;
+        height: 60%;
+
+        transform: translate(-50%, 50%);
+
+        background: #111f33;
+        border-radius: 16px;
+        z-index: 1000;
+
+        display: flex;
+        flex-direction: column;
+
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        color: #f8fbff;
+
+        animation: fadeScale 0.2s ease;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* Header */
+    .sheet-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        background: #0f1b2b;
+    }
+
+    .sheet-header h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: #f8fbff;
+    }
+
+    .sheet-header button {
+        background: rgba(255, 255, 255, 0.08);
+        border: none;
+        color: #fff;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    /* Body */
+    .sheet-body {
+
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    /* Viewer item */
+    .viewer-item {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        align-items: center;
+        background: #15263d;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        margin-bottom: 8px;
+        transition: 0.2s;
+    }
+
+    .viewer-item:hover {
+        background: #1a2f4a;
+        transform: translateY(-1px);
+    }
+
+    /* Avatar */
+    .viewer-item img {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(79, 162, 255, 0.3);
+    }
+
+    /* Text */
+    .viewer-item .name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #f8fbff;
+    }
+
+    .viewer-item .time {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* ---- Story Bar ---- */
+    .stories-bar {
+        display: flex;
+        gap: 12px;
+        padding: 12px 14px 14px;
+        overflow-x: auto;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        scrollbar-width: none;
+    }
+
+    .stories-bar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .story-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        min-width: 62px;
+        transition: transform 0.18s;
+    }
+
+    .story-item:hover {
+        transform: translateY(-2px);
+    }
+
+    .story-label {
+        font-size: 11px;
+        color: #a8b8cc;
+        max-width: 64px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    .story-avatar-wrapper {
+        position: relative;
+        padding: 2.5px;
+        border-radius: 50%;
+        background: #2a3b55;
+    }
+
+    .story-avatar-wrapper.unseen {
+        background: linear-gradient(135deg, #4fa2ff 0%, #7953ff 100%);
+    }
+
+    .story-avatar-wrapper.seen {
+        background: #2a3b55;
+    }
+
+    .story-avatar-wrapper.no-story {
+        background: transparent;
+        border: 2px dashed rgba(79, 162, 255, 0.6);
+    }
+
+    .story-avatar {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #0f1b2b;
+        display: block;
+    }
+
+    .story-avatar-placeholder {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: #1e3a5f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 700;
+        color: #4fa2ff;
+        border: 2px solid #0f1b2b;
+    }
+
+    .story-add-badge {
+        position: absolute;
+        bottom: 1px;
+        right: 1px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #4fa2ff;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #0f1b2b;
+        line-height: 1;
+    }
+
+    /* ---- Shared Modal Overlay ---- */
+    .story-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 9000;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+        animation: fadeIn 0.2s ease;
+    }
+
+    /* ---- My Story Options Sheet ---- */
+    .story-options-sheet {
+        width: 100%;
+        max-width: 480px;
+        background: #111f33;
+        border-radius: 20px 20px 0 0;
+        padding: 12px 16px 32px;
+        animation: slideUp 0.25s ease;
+    }
+
+    .story-options-handle {
+        width: 36px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 2px;
+        margin: 0 auto 20px;
+    }
+
+    .story-option-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 16px;
+        background: #15263d;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 14px;
+        color: #f0f4fa;
+        cursor: pointer;
+        margin-bottom: 10px;
+        text-align: left;
+        transition: background 0.18s;
+    }
+
+    .story-option-btn:hover {
+        background: #1c2f49;
+    }
+
+    .story-option-btn.cancel {
+        background: transparent;
+        border: none;
+        color: #ff6b6b;
+        justify-content: center;
+        font-size: 15px;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+
+    .story-option-icon {
+        font-size: 22px;
+    }
+
+    .story-option-title {
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .story-option-sub {
+        font-size: 12px;
+        color: #6d8aaa;
+        margin-top: 2px;
+    }
+
+    /* ---- Add Story Modal ---- */
+    .add-story-modal {
+        width: 100%;
+        max-width: 420px;
+        background: #111f33;
+        border-radius: 20px 20px 0 0;
+        padding: 20px 20px 36px;
+        animation: slideUp 0.25s ease;
+    }
+
+    .add-story-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+    }
+
+    .add-story-header h3 {
+        font-size: 17px;
+        font-weight: 700;
+        color: #f0f4fa;
+        margin: 0;
+    }
+
+    .close-modal-btn {
+        background: rgba(255, 255, 255, 0.08);
+        border: none;
+        color: #a0b0c4;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .close-modal-btn:hover {
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
+    }
+
+    .story-upload-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 2px dashed rgba(79, 162, 255, 0.4);
+        border-radius: 16px;
+        padding: 36px 20px;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+        margin-bottom: 16px;
+        background: rgba(79, 162, 255, 0.03);
+    }
+
+    .story-upload-area:hover {
+        border-color: rgba(79, 162, 255, 0.7);
+        background: rgba(79, 162, 255, 0.07);
+    }
+
+    .upload-icon {
+        font-size: 36px;
+    }
+
+    .upload-text {
+        font-size: 14px;
+        font-weight: 600;
+        color: #c0d0e0;
+    }
+
+    .upload-sub {
+        font-size: 12px;
+        color: #5a7a99;
+    }
+
+    .story-image-preview-wrap {
+        position: relative;
+        margin-bottom: 16px;
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+    .story-preview-img {
+        width: 100%;
+        max-height: 260px;
+        object-fit: cover;
+        display: block;
+        border-radius: 16px;
+    }
+
+    .change-image-btn {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.65);
+        color: #fff;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+    }
+
+    .story-desc-wrap {
+        position: relative;
+        margin-bottom: 16px;
+    }
+
+    .story-desc-input {
+        width: 100%;
+        background: #15263d;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 12px;
+        color: #f0f4fa;
+        font-size: 14px;
+        padding: 12px 14px 28px;
+        resize: none;
+        outline: none;
+        box-sizing: border-box;
+        font-family: inherit;
+        transition: border-color 0.2s;
+    }
+
+    .story-desc-input:focus {
+        border-color: rgba(79, 162, 255, 0.4);
+    }
+
+    .story-desc-input::placeholder {
+        color: rgba(255, 255, 255, 0.25);
+    }
+
+    .story-char-count {
+        position: absolute;
+        bottom: 10px;
+        right: 12px;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.3);
+    }
+
+    .story-char-count.near-limit {
+        color: #ffa94d;
+    }
+
+    .story-error {
+        background: rgba(255, 80, 80, 0.12);
+        border: 1px solid rgba(255, 80, 80, 0.3);
+        color: #ff8080;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        margin-bottom: 12px;
+    }
+
+    .add-story-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .story-cancel-btn {
+        flex: 1;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.06);
+        border: none;
+        border-radius: 12px;
+        color: #8a9bb0;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.18s;
+    }
+
+    .story-cancel-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .story-upload-btn {
+        flex: 2;
+        padding: 12px;
+        background: #4fa2ff;
+        border: none;
+        border-radius: 12px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: background 0.18s, transform 0.12s;
+    }
+
+    .story-upload-btn:hover {
+        background: #3a8de8;
+    }
+
+    .story-upload-btn:active {
+        transform: scale(0.97);
+    }
+
+    .story-upload-btn.disabled {
+        background: #2a4060;
+        color: #5a7a99;
+        cursor: not-allowed;
+    }
+
+    /* ---- Story Viewer ---- */
+    .viewer-overlay {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .viewer-progress-row {
+        display: flex;
+        gap: 4px;
+        padding: 12px 12px 0;
+        z-index: 10;
+        position: relative;
+    }
+
+    .viewer-progress-bar {
+        flex: 1;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .viewer-progress-fill {
+        height: 100%;
+        background: #fff;
+        border-radius: 2px;
+        transition: width linear;
+    }
+
+    .viewer-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px 8px;
+        z-index: 10;
+        position: relative;
+    }
+
+    .viewer-user-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .viewer-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .viewer-avatar-placeholder {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #1e3a5f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #4fa2ff;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .viewer-username {
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .viewer-time {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.55);
+        margin-top: 1px;
+    }
+
+    .viewer-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .viewer-delete-btn {
+        background: rgba(255, 80, 80, 0.2);
+        border: none;
+        color: #ff8080;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.18s;
+    }
+
+    .viewer-delete-btn:hover {
+        background: rgba(255, 80, 80, 0.35);
+    }
+
+    .viewer-close-btn {
+        background: rgba(255, 255, 255, 0.12);
+        border: none;
+        color: #fff;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .viewer-close-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .viewer-body {
+        flex: 1;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .viewer-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .tap-left,
+    .tap-right {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 38%;
+        z-index: 5;
+        cursor: pointer;
+    }
+
+    .tap-left {
+        left: 0;
+    }
+
+    .tap-right {
+        right: 0;
+    }
+
+    .viewer-caption {
+        position: absolute;
+        bottom: 1%;
+        transform: translateY(50%);
+        left: 0;
+        right: 0;
+        padding: 16px 24px;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-size: 15px;
+        line-height: 1.5;
+        z-index: 6;
+        text-align: center;
+        backdrop-filter: blur(4px);
+        border-radius: 12px;
+        margin: 0 20px;
+        width: calc(100% - 40px);
+    }
+
+    .viewer-footer-owner {
+        padding: 14px 20px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .viewer-views-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 14px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+    }
+
+    /* ---- Animations ---- */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(60px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .tap-zone {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 40%;
+        z-index: 20;
+    }
+
+    .tap-zone.left {
+        left: 0;
+    }
+
+    .tap-zone.right {
+        right: 0;
+    }
+
+    .own-story-footer {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.7);
+        padding: 8px 20px;
+        border-radius: 9999px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+
+    .view-count-number {
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 10000;
+        display: flex;
+        align-items: flex-end;
+    }
+
+    .modal-content {
+        width: 100%;
+        background: #15263d;
+        border-radius: 16px 16px 0 0;
+        padding: 10px;
+    }
+
+    .modal-option {
+        width: 100%;
+        padding: 16px;
+        text-align: center;
+        background: #1e2f4a;
+        color: #fff;
+        margin-bottom: 8px;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        border: none;
+        cursor: pointer;
+    }
+
+    .modal-option.cancel {
+        background: #2a2a2a;
+        color: #ff5555;
+    }
+
     .unreadstyle {
         background: #4fa2ff;
         color: #fff;
@@ -492,7 +1530,133 @@
         opacity: 0.5;
     }
 </style>
+
+
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // =========================
+        // STORY VIEWER (CLEAN VERSION)
+        // =========================
+
+        let progressTimer = null;
+        const storyDuration = 10000; // 10s
+
+        function clearProgress() {
+            if (progressTimer) {
+                clearTimeout(progressTimer);
+                progressTimer = null;
+            }
+        }
+
+        function startProgress(index) {
+            clearProgress();
+
+            const fill = document.getElementById('prog-' + index);
+            if (!fill) return;
+
+            // reset instantly
+            fill.style.transition = 'none';
+            fill.style.width = '0%';
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    fill.style.transition = `width ${storyDuration / 1000}s linear`;
+                    fill.style.width = '100%';
+                });
+            });
+
+            progressTimer = setTimeout(() => {
+                Livewire.dispatch('nextViewerStory');
+            }, storyDuration);
+        }
+
+        // =========================
+        // LIVEWIRE EVENTS (STORY)
+        // =========================
+
+        Livewire.on('storyViewerOpened', (data) => {
+            setTimeout(() => startProgress(data.index), 80);
+        });
+
+        Livewire.on('storyIndexChanged', (data) => {
+            setTimeout(() => startProgress(data.index), 50);
+        });
+
+        Livewire.on('storyViewerClosed', () => {
+            clearProgress();
+        });
+
+        // keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            const viewer = document.getElementById('storyViewerOverlay');
+            if (!viewer) return;
+
+            if (e.key === 'ArrowRight') Livewire.dispatch('nextViewerStory');
+            if (e.key === 'ArrowLeft') Livewire.dispatch('prevViewerStory');
+            if (e.key === 'Escape') Livewire.dispatch('closeStoryViewer');
+        });
+
+
+        // =========================
+        // CHAT UI HELPERS
+        // =========================
+
+        function scrollToBottom() {
+            const box = document.querySelector(".msg-body");
+            if (!box) return;
+
+            requestAnimationFrame(() => {
+                box.scrollTo({
+                    top: box.scrollHeight,
+                    behavior: "smooth"
+                });
+            });
+        }
+
+        function updateSendButton() {
+            const input = document.querySelector(".msg-input");
+            const btn = document.querySelector(".send-btn");
+            if (!input || !btn) return;
+
+            const hasText = input.value && input.value.trim().length > 0;
+
+            btn.disabled = !hasText;
+            btn.classList.toggle("btn-disabled", !hasText);
+        }
+
+        function initChatInput() {
+            const input = document.querySelector(".msg-input");
+            const form = document.querySelector(".msg-footer");
+
+            if (!input || !form) return;
+
+            input.addEventListener("input", updateSendButton);
+
+            form.addEventListener("submit", () => {
+                setTimeout(scrollToBottom, 30);
+            });
+
+            updateSendButton();
+        }
+
+        function handleChatSelected() {
+            setTimeout(() => {
+                initChatInput();
+                scrollToBottom();
+            }, 80);
+        }
+
+        // =========================
+        // LIVEWIRE EVENTS (CHAT)
+        // =========================
+
+        window.addEventListener("chatSelected", handleChatSelected);
+        window.addEventListener("messageSent", scrollToBottom);
+
+        Livewire.on("messageSent", scrollToBottom);
+
+    });
     document.addEventListener("DOMContentLoaded", function() {
 
         // Handle mobile view for chat selection
@@ -636,5 +1800,4 @@
             }, 20);
         }
     });
-    
 </script>

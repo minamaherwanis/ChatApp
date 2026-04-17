@@ -13,16 +13,17 @@ Route::middleware(['guest'])->group(function () {
 });
 
 
-
 Route::middleware(['auth',  'profile.exists'])->group(function () {
   Route::view('/complete-profile', 'complete-profile')->name('profile.complete');
   Route::post('/save-profile', [AuthController::class, 'completeProfile'])->name('save.profile');
 });
+
+
 Route::middleware(['auth', 'has.profile'])->group(function () {
+    Route::get('/', function () {
+    return view('chat-list');
+  })->name('/');
   Route::get('/home', function () {
     return view('chat-list');
   })->name('home');
-
-  
-
-  });
+});
