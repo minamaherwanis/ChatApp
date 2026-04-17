@@ -8,8 +8,14 @@
                 <button class="icon-button" wire:click="toggleSearch" title="Start new chat">
                     {{ $viewmode === 'chats' ? '➕' : '💬' }}
                 </button>
-                <button class="icon-button" title="More options">⋯</button>
-
+                <a href="/profile" class="icon-button" title="Profile">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M20 21a8 8 0 0 0-16 0"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </a>
             </div>
         </div>
 
@@ -237,11 +243,11 @@
                 @endif
             </div>
         @endif
-
-        <div class="search-box">
-            <input type="text" placeholder="Search chats..." id="searchInput" wire:model.live="search">
-        </div>
-
+        @if ($viewmode != 'chats')
+            <div class="search-box">
+                <input type="text" placeholder="Search chats..." id="searchInput" wire:model.live="search">
+            </div>
+        @endif
         @if ($viewmode === 'chats')
             <div class="chat-list">
                 @forelse ($chats as $chat)
@@ -259,9 +265,19 @@
                             @else
                                 {{ strtoupper(substr($otheruser->profile->username, 0, 2)) }}
                             @endif
+
                         </div>
                         <div class="chat-preview">
-                            <div class="chat-name">{{ $otheruser->profile->username }}</div>
+                            <div class="chat-name">
+                                {{ $otheruser->profile->name }}
+
+                                @if (optional($otheruser->profile)->last_seen && $otheruser->profile->last_seen->gt(now()->subMinute()))
+                                    <span class="online-badge">
+                                        <span class="online-circle"></span>
+
+                                    </span>
+                                @endif
+                            </div>
                             <div class="chat-message">
                                 {{ $chat->lastMessage() ? $chat->lastMessage()->content : 'No messages yet.' }}</div>
                         </div>
@@ -297,7 +313,6 @@
                         <div class="chat-name">{{ '@' . $user->username }}</div>
                         <div class="chat-message">{{ $user->bio }}</div>
                     </div>
-                    <div class="chat-time">Online</div>
                 </a>
             @empty
                 <div style="padding: 20px; text-align: center; color: #888;">
@@ -321,7 +336,12 @@
 
                     {{-- Header --}}
                     <div class="msg-header">
+
                         <div class="msg-header-left">
+                            <a wire:click="arrowback()" class="chat-back-btn">
+                                ←
+                            </a>
+
                             <div class="chat-avatar" style="background: #37b24d;">
 
 
@@ -334,40 +354,36 @@
                                 @endif
                             </div>
                             <div class="msg-peer-info">
-                                <span class="msg-peer-name">{{ $selectedUser->profile->name }}</span>
-                                <span class="msg-peer-status"><span class="status-dot"></span> Online</span>
+                                <span class="msg-peer-name">
+                                    {{ $selectedUser->profile->name }}
+                                </span>
+
+                                <span class="msg-peer-status">
+                                    @if ($selectedUser->profile->last_seen && $selectedUser->profile->last_seen->gt(now()->subMinute()))
+
+                                        <span class="status-dot online"></span>
+                                        Online
+                                    @else
+                                        <span class="status-dot offline"></span>
+
+                                        @if ($selectedUser->profile->last_seen)
+                                            Last seen
+                                            {{ $selectedUser->profile->last_seen->diffForHumans() }}
+                                        @else
+                                            Offline
+                                        @endif
+
+                                    @endif
+                                </span>
                             </div>
                         </div>
-                        <div class="msg-header-actions">
-                            <button class="icon-button" title="Voice call">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path
-                                        d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-                                </svg>
-                            </button>
-                            <button class="icon-button" title="Video call">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <polygon points="23 7 16 12 23 17 23 7" />
-                                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-                                </svg>
-                            </button>
-                            <button class="icon-button">⋯</button>
-                        </div>
+
                     </div>
 
                     {{-- Messages --}}
                     <div class="msg-body" id="msgBody">
 
-                        <div id="load-more-indicator" class="hidden flex justify-center animate-fade-in">
-                            <div
-                                class="bg-zinc-700 text-zinc-300 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm">
-                                Load more...
-                            </div>
-                        </div>
+
                         @if ($messages)
                             @foreach ($messages as $message)
                                 @if (!$message->isSender())
@@ -421,22 +437,6 @@
                             @endforeach
 
                         @endif
-                        {{-- <div class="msg-row msg-theirs">
-                            <div class="chat-avatar msg-avatar"
-                                style="width:32px;height:32px;font-size:0.7rem;background:#1e5ba5;flex-shrink:0;">AH
-                            </div>
-                            <div class="msg-bubble-wrap">
-                                <div class="msg-bubble bubble-theirs">Hey! How are you doing?</div>
-                                <span class="msg-time">10:30</span>
-                            </div>
-                        </div>
-
-                        <div class="msg-row msg-mine">
-                            <div class="msg-bubble-wrap">
-                                <div class="msg-bubble bubble-mine">I'm good thanks! You?</div>
-                                <span class="msg-time">10:31</span>
-                            </div>
-                        </div> --}}
 
                     </div>
 
@@ -513,6 +513,31 @@
     </div>
 @endif
 <style>
+    .chat-name {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* badge */
+    .online-badge {
+        display: flex;
+        align-items: center;
+        font-size: 12px;
+        color: #2ecc71;
+        font-weight: 500;
+    }
+
+    /* green circle */
+    .online-circle {
+        width: 8px;
+        height: 8px;
+        background: #2ecc71;
+        border-radius: 50%;
+        margin-right: 4px;
+        box-shadow: 0 0 4px rgba(46, 204, 113, 0.6);
+    }
+
     .bottom-sheet-overlay {
 
         position: fixed;
@@ -582,6 +607,28 @@
         height: 30px;
         border-radius: 50%;
         cursor: pointer;
+    }
+
+    .chat-back-btn {
+        cursor: pointer;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 20px;
+        text-decoration: none;
+        margin-right: 12px;
+        transition: 0.2s;
+        backdrop-filter: blur(8px);
+    }
+
+    .chat-back-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: scale(1.05);
     }
 
     /* Body */
@@ -1363,10 +1410,19 @@
     }
 
     .status-dot {
-        width: 7px;
-        height: 7px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
-        background: #40c057;
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+    .status-dot.online {
+        background: #2ecc71;
+    }
+
+    .status-dot.offline {
+        background: #95a5a6;
     }
 
     .msg-header-actions {

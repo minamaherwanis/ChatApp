@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Livewire\Chat;
+use App\Models\Profile;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['guest'])->group(function () {
@@ -20,10 +21,27 @@ Route::middleware(['auth',  'profile.exists'])->group(function () {
 
 
 Route::middleware(['auth', 'has.profile'])->group(function () {
-    Route::get('/', function () {
+  // Route::get('/profile', Profile::class);
+
+  Route::get('/', function () {
     return view('chat-list');
   })->name('/');
   Route::get('/home', function () {
     return view('chat-list');
   })->name('home');
+
+  Route::get('/profile', function () {
+    return view('profile-view');
+  })->name('profile');
+
+  Route::post('/heartbeat', function () {
+    if (auth()->check()) {
+      Profile::where('user_id', auth()->id())->update([
+        'last_seen' => now(),
+        'is_online' => true
+      ]);
+    }
+
+    return response()->json(['status' => 'ok']);
+  });
 });

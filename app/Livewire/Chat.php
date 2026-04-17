@@ -64,6 +64,12 @@ class Chat extends Component
     }
 
 
+    public function arrowback()
+    {
+        $this->selectedChat = null;
+        $this->dispatch('chatSelected');
+    }
+
     // ==================== View Views ====================
 
 
@@ -476,10 +482,15 @@ class Chat extends Component
     // ==================== Render ====================
     public function render()
     {
+
         $users = [];
         if ($this->viewmode === 'search' && !empty($this->search)) {
-            $users = Profile::where('username', 'like', '%' . $this->search . '%')
-                ->orWhere('email', 'like', '%' . $this->search . '%')
+
+            $users = Profile::where('user_id', '!=', auth()->id())
+                ->where(function ($query) {
+                    $query->where('username', 'like', '%' . $this->search . '%')
+                        ->orWhere('email', 'like', '%' . $this->search . '%');
+                })
                 ->get();
         }
 
