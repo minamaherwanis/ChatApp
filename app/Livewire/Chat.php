@@ -64,10 +64,12 @@ class Chat extends Component
     }
 
 
-    public function arrowback()
+    public function backToChats()
     {
         $this->selectedChat = null;
-        $this->dispatch('chatSelected');
+        $this->selectedUser = null;
+        $this->messages = null;
+        $this->dispatch('chatClosed');
     }
 
     // ==================== View Views ====================
@@ -415,7 +417,7 @@ class Chat extends Component
 
         $this->messages = $this->selectedChat->loadMessages($this->limit);
         $unread = $this->selectedChat->unreadMessages()->count();
-
+      
         if ($unread > 0) {
             $this->selectedChat->markMessagesAsRead();
             broadcast(new \App\Events\MessageRead($this->selectedChat->id, $this->selectedUser->id));

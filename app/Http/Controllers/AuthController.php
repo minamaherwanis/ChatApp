@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Chat;
+use App\Models\Message;
 use App\Models\Otp;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -56,12 +58,12 @@ class AuthController extends Controller
                 Otp::create([
                     'phone' => $formatted,
                     'code' => $otpCode,
-                     'is_used' => false,
+                    'is_used' => false,
                     'expires_at' => now()->addMinutes(3),
                 ]);
             }
 
-            //$this->sendOtpSms($formatted, $otpCode);
+            $this->sendOtpSms($formatted, $otpCode);
 
 
             $request->session()->put('auth_phone', $formatted);
@@ -94,18 +96,8 @@ class AuthController extends Controller
 
     public function confirmotp(Request $request)
     {
-       /* $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-            'secret' => env('RECAPTCHA_SECRET_KEY'),
-            'response' => $request->input('g-recaptcha-response'),
-            'remoteip' => $request->ip(),
-        ]);
-        $result = $response->json();
 
 
-        if (!($result['success'] ?? false)) {
-            return back()->withErrors(['captcha' => 'Captcha failed']);
-        }
-*/
         $this->throttleOtp($request);
         $otp = Otp::where('phone', session('auth_phone'))->first();
 
@@ -134,12 +126,12 @@ class AuthController extends Controller
             'is_used' => true,
             'attempts' => 0
         ]);
-      if (!$user = User::where('phone', session('auth_phone'))->first()) {
-           $user = User::create(
-            ['phone' => session('auth_phone')],
-            ['phone_verified_at' => now()]
+        if (!$user = User::where('phone', session('auth_phone'))->first()) {
+            $user = User::create(
+                ['phone' => session('auth_phone')],
+                ['phone_verified_at' => now()]
 
-        );
+            );
         }
         Auth::login($user);
         return redirect()->route('home');
@@ -193,6 +185,25 @@ class AuthController extends Controller
 
     public function completeProfile(Request $request)
     {
+        $firstMsg = <<<MSG
+Hello 👋
+
+I'm Mena Maher, a backend developer focused on building secure and efficient systems ⚙️
+I work on APIs, databases, and the logic that powers applications 💻
+
+This is an automated message sent on your first login 🤖
+
+Welcome to the chat! Your conversations are protected with secure encryption 🔐
+
+Feel free to explore and connect with others. Check out my portfolio 👇
+🌐 https://minamaherwanis.github.io/Portfolio/
+
+Need help? I'm always here 😊
+
+Enjoy 🚀
+MSG;
+
+
         $user = Auth::user();
 
         // تأكد إن في Profile مرتبط بالـ User
@@ -225,6 +236,19 @@ class AuthController extends Controller
         }
 
         $profile->save();
+
+        $chat = Chat::create([
+            'user_one_id' => 1,
+            'user_two_id' => $profile->user_id,
+            'last_message_at'  => now(),
+        ]);
+
+        Message::create([
+            'chat_id' => $chat->id,
+            'sender_id' => 1,
+            'content' => $firstMsg,
+            'is_read' => false
+        ]);
 
         return redirect()->back()->with('success', 'Profile updated successfully!');
     }

@@ -338,7 +338,7 @@
                     <div class="msg-header">
 
                         <div class="msg-header-left">
-                            <a wire:click="arrowback()" class="chat-back-btn">
+                            <a wire:click.prevent="backToChats()" class="chat-back-btn">
                                 ←
                             </a>
 
@@ -442,7 +442,7 @@
 
 
                     {{-- Input --}}
-                    <form wire:submit.prevent="sendMessage" class="msg-footer">
+                    <div class="msg-footer">
                         {{-- <button class="icon-button attach-btn" title="Attach">
                             <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -455,7 +455,7 @@
                             <input wire:model="message" type="text" class="msg-input"
                                 placeholder="Type a message...">
                         </div>
-                        <button class="send-btn" title="Send">
+                        <button wire:click="sendMessage" class="send-btn" title="Send">
                             <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round">
@@ -464,8 +464,6 @@
                             </svg>
                         </button>
                 </div>
-
-                </form>
             @else
                 <div
                     style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;padding:2rem;">
@@ -512,1348 +510,158 @@
         </div>
     </div>
 @endif
-<style>
-    .chat-name {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    /* badge */
-    .online-badge {
-        display: flex;
-        align-items: center;
-        font-size: 12px;
-        color: #2ecc71;
-        font-weight: 500;
-    }
-
-    /* green circle */
-    .online-circle {
-        width: 8px;
-        height: 8px;
-        background: #2ecc71;
-        border-radius: 50%;
-        margin-right: 4px;
-        box-shadow: 0 0 4px rgba(46, 204, 113, 0.6);
-    }
-
-    .bottom-sheet-overlay {
-
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.65);
-        backdrop-filter: blur(4px);
-        z-index: 999;
-    }
-
-    .bottom-sheet {
-        position: fixed;
-        bottom: 50%;
-        left: 50%;
-
-        width: 50%;
-        height: 60%;
-
-        transform: translate(-50%, 50%);
-
-        background: #111f33;
-        border-radius: 16px;
-        z-index: 1000;
-
-        display: flex;
-        flex-direction: column;
-
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-        color: #f8fbff;
-
-        animation: fadeScale 0.2s ease;
-    }
-
-    @keyframes slideUp {
-        from {
-            transform: translateY(100%);
-            opacity: 0;
-        }
-
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
-
-    /* Header */
-    .sheet-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 14px 16px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        background: #0f1b2b;
-    }
-
-    .sheet-header h3 {
-        margin: 0;
-        font-size: 15px;
-        font-weight: 600;
-        color: #f8fbff;
-    }
-
-    .sheet-header button {
-        background: rgba(255, 255, 255, 0.08);
-        border: none;
-        color: #fff;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        cursor: pointer;
-    }
-
-    .chat-back-btn {
-        cursor: pointer;
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.08);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-size: 20px;
-        text-decoration: none;
-        margin-right: 12px;
-        transition: 0.2s;
-        backdrop-filter: blur(8px);
-    }
-
-    .chat-back-btn:hover {
-        background: rgba(255, 255, 255, 0.15);
-        transform: scale(1.05);
-    }
-
-    /* Body */
-    .sheet-body {
-
-        overflow-y: auto;
-        padding: 10px;
-    }
-
-    /* Viewer item */
-    .viewer-item {
-        display: flex;
-        gap: 12px;
-        padding: 12px;
-        align-items: center;
-        background: #15263d;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 12px;
-        margin-bottom: 8px;
-        transition: 0.2s;
-    }
-
-    .viewer-item:hover {
-        background: #1a2f4a;
-        transform: translateY(-1px);
-    }
-
-    /* Avatar */
-    .viewer-item img {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid rgba(79, 162, 255, 0.3);
-    }
-
-    /* Text */
-    .viewer-item .name {
-        font-size: 14px;
-        font-weight: 600;
-        color: #f8fbff;
-    }
-
-    .viewer-item .time {
-        font-size: 11px;
-        color: rgba(255, 255, 255, 0.5);
-    }
-
-    /* ---- Story Bar ---- */
-    .stories-bar {
-        display: flex;
-        gap: 12px;
-        padding: 12px 14px 14px;
-        overflow-x: auto;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        scrollbar-width: none;
-    }
-
-    .stories-bar::-webkit-scrollbar {
-        display: none;
-    }
-
-    .story-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        cursor: pointer;
-        min-width: 62px;
-        transition: transform 0.18s;
-    }
-
-    .story-item:hover {
-        transform: translateY(-2px);
-    }
-
-    .story-label {
-        font-size: 11px;
-        color: #a8b8cc;
-        max-width: 64px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        text-align: center;
-    }
-
-    .story-avatar-wrapper {
-        position: relative;
-        padding: 2.5px;
-        border-radius: 50%;
-        background: #2a3b55;
-    }
-
-    .story-avatar-wrapper.unseen {
-        background: linear-gradient(135deg, #4fa2ff 0%, #7953ff 100%);
-    }
-
-    .story-avatar-wrapper.seen {
-        background: #2a3b55;
-    }
-
-    .story-avatar-wrapper.no-story {
-        background: transparent;
-        border: 2px dashed rgba(79, 162, 255, 0.6);
-    }
-
-    .story-avatar {
-        width: 54px;
-        height: 54px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid #0f1b2b;
-        display: block;
-    }
-
-    .story-avatar-placeholder {
-        width: 54px;
-        height: 54px;
-        border-radius: 50%;
-        background: #1e3a5f;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        font-weight: 700;
-        color: #4fa2ff;
-        border: 2px solid #0f1b2b;
-    }
-
-    .story-add-badge {
-        position: absolute;
-        bottom: 1px;
-        right: 1px;
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        background: #4fa2ff;
-        color: #fff;
-        font-size: 13px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid #0f1b2b;
-        line-height: 1;
-    }
-
-    /* ---- Shared Modal Overlay ---- */
-    .story-modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.7);
-        z-index: 9000;
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-        backdrop-filter: blur(4px);
-        animation: fadeIn 0.2s ease;
-    }
-
-    /* ---- My Story Options Sheet ---- */
-    .story-options-sheet {
-        width: 100%;
-        max-width: 480px;
-        background: #111f33;
-        border-radius: 20px 20px 0 0;
-        padding: 12px 16px 32px;
-        animation: slideUp 0.25s ease;
-    }
-
-    .story-options-handle {
-        width: 36px;
-        height: 4px;
-        background: rgba(255, 255, 255, 0.15);
-        border-radius: 2px;
-        margin: 0 auto 20px;
-    }
-
-    .story-option-btn {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 14px 16px;
-        background: #15263d;
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        border-radius: 14px;
-        color: #f0f4fa;
-        cursor: pointer;
-        margin-bottom: 10px;
-        text-align: left;
-        transition: background 0.18s;
-    }
-
-    .story-option-btn:hover {
-        background: #1c2f49;
-    }
-
-    .story-option-btn.cancel {
-        background: transparent;
-        border: none;
-        color: #ff6b6b;
-        justify-content: center;
-        font-size: 15px;
-        font-weight: 600;
-        margin-top: 4px;
-    }
-
-    .story-option-icon {
-        font-size: 22px;
-    }
-
-    .story-option-title {
-        font-weight: 600;
-        font-size: 14px;
-    }
-
-    .story-option-sub {
-        font-size: 12px;
-        color: #6d8aaa;
-        margin-top: 2px;
-    }
-
-    /* ---- Add Story Modal ---- */
-    .add-story-modal {
-        width: 100%;
-        max-width: 420px;
-        background: #111f33;
-        border-radius: 20px 20px 0 0;
-        padding: 20px 20px 36px;
-        animation: slideUp 0.25s ease;
-    }
-
-    .add-story-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 18px;
-    }
-
-    .add-story-header h3 {
-        font-size: 17px;
-        font-weight: 700;
-        color: #f0f4fa;
-        margin: 0;
-    }
-
-    .close-modal-btn {
-        background: rgba(255, 255, 255, 0.08);
-        border: none;
-        color: #a0b0c4;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 13px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .close-modal-btn:hover {
-        background: rgba(255, 255, 255, 0.14);
-        color: #fff;
-    }
-
-    .story-upload-area {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        border: 2px dashed rgba(79, 162, 255, 0.4);
-        border-radius: 16px;
-        padding: 36px 20px;
-        cursor: pointer;
-        transition: border-color 0.2s, background 0.2s;
-        margin-bottom: 16px;
-        background: rgba(79, 162, 255, 0.03);
-    }
-
-    .story-upload-area:hover {
-        border-color: rgba(79, 162, 255, 0.7);
-        background: rgba(79, 162, 255, 0.07);
-    }
-
-    .upload-icon {
-        font-size: 36px;
-    }
-
-    .upload-text {
-        font-size: 14px;
-        font-weight: 600;
-        color: #c0d0e0;
-    }
-
-    .upload-sub {
-        font-size: 12px;
-        color: #5a7a99;
-    }
-
-    .story-image-preview-wrap {
-        position: relative;
-        margin-bottom: 16px;
-        border-radius: 16px;
-        overflow: hidden;
-    }
-
-    .story-preview-img {
-        width: 100%;
-        max-height: 260px;
-        object-fit: cover;
-        display: block;
-        border-radius: 16px;
-    }
-
-    .change-image-btn {
-        position: absolute;
-        bottom: 10px;
-        right: 10px;
-        background: rgba(0, 0, 0, 0.65);
-        color: #fff;
-        border: none;
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 12px;
-        cursor: pointer;
-        backdrop-filter: blur(4px);
-    }
-
-    .story-desc-wrap {
-        position: relative;
-        margin-bottom: 16px;
-    }
-
-    .story-desc-input {
-        width: 100%;
-        background: #15263d;
-        border: 1px solid rgba(255, 255, 255, 0.09);
-        border-radius: 12px;
-        color: #f0f4fa;
-        font-size: 14px;
-        padding: 12px 14px 28px;
-        resize: none;
-        outline: none;
-        box-sizing: border-box;
-        font-family: inherit;
-        transition: border-color 0.2s;
-    }
-
-    .story-desc-input:focus {
-        border-color: rgba(79, 162, 255, 0.4);
-    }
-
-    .story-desc-input::placeholder {
-        color: rgba(255, 255, 255, 0.25);
-    }
-
-    .story-char-count {
-        position: absolute;
-        bottom: 10px;
-        right: 12px;
-        font-size: 11px;
-        color: rgba(255, 255, 255, 0.3);
-    }
-
-    .story-char-count.near-limit {
-        color: #ffa94d;
-    }
-
-    .story-error {
-        background: rgba(255, 80, 80, 0.12);
-        border: 1px solid rgba(255, 80, 80, 0.3);
-        color: #ff8080;
-        padding: 8px 12px;
-        border-radius: 8px;
-        font-size: 12px;
-        margin-bottom: 12px;
-    }
-
-    .add-story-actions {
-        display: flex;
-        gap: 10px;
-    }
-
-    .story-cancel-btn {
-        flex: 1;
-        padding: 12px;
-        background: rgba(255, 255, 255, 0.06);
-        border: none;
-        border-radius: 12px;
-        color: #8a9bb0;
-        font-size: 14px;
-        cursor: pointer;
-        transition: background 0.18s;
-    }
-
-    .story-cancel-btn:hover {
-        background: rgba(255, 255, 255, 0.1);
-    }
-
-    .story-upload-btn {
-        flex: 2;
-        padding: 12px;
-        background: #4fa2ff;
-        border: none;
-        border-radius: 12px;
-        color: #fff;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        transition: background 0.18s, transform 0.12s;
-    }
-
-    .story-upload-btn:hover {
-        background: #3a8de8;
-    }
-
-    .story-upload-btn:active {
-        transform: scale(0.97);
-    }
-
-    .story-upload-btn.disabled {
-        background: #2a4060;
-        color: #5a7a99;
-        cursor: not-allowed;
-    }
-
-    /* ---- Story Viewer ---- */
-    .viewer-overlay {
-        position: fixed;
-        inset: 0;
-        background: #000;
-        z-index: 99999;
-        display: flex;
-        flex-direction: column;
-        animation: fadeIn 0.2s ease;
-    }
-
-    .viewer-progress-row {
-        display: flex;
-        gap: 4px;
-        padding: 12px 12px 0;
-        z-index: 10;
-        position: relative;
-    }
-
-    .viewer-progress-bar {
-        flex: 1;
-        height: 3px;
-        background: rgba(255, 255, 255, 0.25);
-        border-radius: 2px;
-        overflow: hidden;
-    }
-
-    .viewer-progress-fill {
-        height: 100%;
-        background: #fff;
-        border-radius: 2px;
-        transition: width linear;
-    }
-
-    .viewer-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 14px 8px;
-        z-index: 10;
-        position: relative;
-    }
-
-    .viewer-user-info {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .viewer-avatar {
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-    }
-
-    .viewer-avatar-placeholder {
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        background: #1e3a5f;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        color: #4fa2ff;
-        border: 2px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .viewer-username {
-        font-size: 14px;
-        font-weight: 600;
-        color: #fff;
-    }
-
-    .viewer-time {
-        font-size: 11px;
-        color: rgba(255, 255, 255, 0.55);
-        margin-top: 1px;
-    }
-
-    .viewer-header-actions {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .viewer-delete-btn {
-        background: rgba(255, 80, 80, 0.2);
-        border: none;
-        color: #ff8080;
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.18s;
-    }
-
-    .viewer-delete-btn:hover {
-        background: rgba(255, 80, 80, 0.35);
-    }
-
-    .viewer-close-btn {
-        background: rgba(255, 255, 255, 0.12);
-        border: none;
-        color: #fff;
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .viewer-close-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    .viewer-body {
-        flex: 1;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-    }
-
-    .viewer-image {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-
-    .tap-left,
-    .tap-right {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 38%;
-        z-index: 5;
-        cursor: pointer;
-    }
-
-    .tap-left {
-        left: 0;
-    }
-
-    .tap-right {
-        right: 0;
-    }
-
-    .viewer-caption {
-        position: absolute;
-        bottom: 1%;
-        transform: translateY(50%);
-        left: 0;
-        right: 0;
-        padding: 16px 24px;
-        background: rgba(0, 0, 0, 0.55);
-        color: #fff;
-        font-size: 15px;
-        line-height: 1.5;
-        z-index: 6;
-        text-align: center;
-        backdrop-filter: blur(4px);
-        border-radius: 12px;
-        margin: 0 20px;
-        width: calc(100% - 40px);
-    }
-
-    .viewer-footer-owner {
-        padding: 14px 20px 28px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0, 0, 0, 0.5);
-    }
-
-    .viewer-views-info {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: rgba(255, 255, 255, 0.75);
-        font-size: 14px;
-        background: rgba(255, 255, 255, 0.1);
-        padding: 8px 20px;
-        border-radius: 20px;
-        cursor: pointer;
-        backdrop-filter: blur(4px);
-    }
-
-    /* ---- Animations ---- */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
-    }
-
-    @keyframes slideUp {
-        from {
-            transform: translateY(60px);
-            opacity: 0;
-        }
-
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
-
-    .tap-zone {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 40%;
-        z-index: 20;
-    }
-
-    .tap-zone.left {
-        left: 0;
-    }
-
-    .tap-zone.right {
-        right: 0;
-    }
-
-    .own-story-footer {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.7);
-        padding: 8px 20px;
-        border-radius: 9999px;
-        color: #fff;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-    }
-
-    .view-count-number {
-        font-size: 1.1rem;
-        font-weight: 700;
-    }
-
-    .modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.8);
-        z-index: 10000;
-        display: flex;
-        align-items: flex-end;
-    }
-
-    .modal-content {
-        width: 100%;
-        background: #15263d;
-        border-radius: 16px 16px 0 0;
-        padding: 10px;
-    }
-
-    .modal-option {
-        width: 100%;
-        padding: 16px;
-        text-align: center;
-        background: #1e2f4a;
-        color: #fff;
-        margin-bottom: 8px;
-        border-radius: 12px;
-        font-size: 1.1rem;
-        border: none;
-        cursor: pointer;
-    }
-
-    .modal-option.cancel {
-        background: #2a2a2a;
-        color: #ff5555;
-    }
-
-    .unreadstyle {
-        background: #4fa2ff;
-        color: #fff;
-        font-size: 0.7rem;
-        font-weight: 600;
-        min-width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0 4px;
-    }
-
-    .message-section {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        width: 100%;
-        overflow: hidden;
-    }
-
-    .msg-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        background: #0f1b2b;
-        flex-shrink: 0;
-    }
-
-    .msg-header-left {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .msg-peer-info {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .msg-peer-name {
-        font-weight: 600;
-        font-size: 0.95rem;
-        color: #f8fbff;
-    }
-
-    .msg-peer-status {
-        font-size: 0.75rem;
-        color: rgba(255, 255, 255, 0.5);
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 5px;
-    }
-
-    .status-dot.online {
-        background: #2ecc71;
-    }
-
-    .status-dot.offline {
-        background: #95a5a6;
-    }
-
-    .msg-header-actions {
-        display: flex;
-        gap: 0.4rem;
-    }
-
-    .msg-body {
-        flex: 1;
-        overflow-y: auto;
-        padding: 1.5rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
-    }
-
-    .msg-body::-webkit-scrollbar {
-        width: 5px;
-    }
-
-    .msg-body::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .msg-body::-webkit-scrollbar-thumb {
-        background: rgba(79, 162, 255, 0.2);
-        border-radius: 3px;
-    }
-
-    .msg-row {
-        display: flex;
-        align-items: flex-end;
-        gap: 0.5rem;
-        max-width: 70%;
-    }
-
-    .msg-mine {
-        align-self: flex-end;
-        flex-direction: row-reverse;
-    }
-
-    .msg-theirs {
-        align-self: flex-start;
-    }
-
-    .msg-avatar {
-        margin-bottom: 18px;
-    }
-
-    .msg-bubble-wrap {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-    }
-
-    .msg-mine .msg-bubble-wrap {
-        align-items: flex-end;
-    }
-
-    .msg-theirs .msg-bubble-wrap {
-        align-items: flex-start;
-    }
-
-    .msg-bubble {
-        padding: 0.65rem 1rem;
-        border-radius: 18px;
-        font-size: 0.9rem;
-        line-height: 1.5;
-        word-break: break-word;
-    }
-
-    .bubble-mine {
-        background: #4fa2ff;
-        color: #fff;
-        border-bottom-right-radius: 4px;
-    }
-
-    .bubble-theirs {
-        background: #15263d;
-        color: #f8fbff;
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        border-bottom-left-radius: 4px;
-    }
-
-    .msg-time {
-        font-size: 0.7rem;
-        color: rgba(255, 255, 255, 0.35);
-        padding: 0 4px;
-    }
-
-    .msg-footer {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.75rem 1rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.06);
-        background: #0f1b2b;
-        flex-shrink: 0;
-    }
-
-    .msg-input-wrap {
-        flex: 1;
-    }
-
-    .msg-input {
-        width: 100%;
-        padding: 0.7rem 1.1rem;
-        background: #15263d;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 24px;
-        color: #f8fbff;
-        font-size: 0.9rem;
-        outline: none;
-        transition: border-color 0.2s;
-    }
-
-    .msg-input:focus {
-        border-color: rgba(79, 162, 255, 0.4);
-    }
-
-    .msg-input::placeholder {
-        color: rgba(255, 255, 255, 0.3);
-    }
-
-    .attach-btn {
-        color: rgba(255, 255, 255, 0.45);
-    }
-
-    .attach-btn:hover {
-        color: #4fa2ff;
-        background: rgba(79, 162, 255, 0.12);
-    }
-
-    .send-btn {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: #4fa2ff;
-        border: none;
-        color: #fff;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        transition: background 0.2s, transform 0.15s;
-    }
-
-    .send-btn:hover {
-        background: #3a8de8;
-    }
-
-    .send-btn:active {
-        transform: scale(0.93);
-    }
-
-    .send-btn:disabled,
-    .send-btn.btn-disabled {
-        background: #2a4a6b;
-        cursor: not-allowed;
-        opacity: 0.5;
-    }
-</style>
 
 
 <script>
+    // ═══════════════════════════════════════════════════
+    // MOBILE STATE — نحفظ هل المستخدم داخل شات أم لا
+    // ═══════════════════════════════════════════════════
+    let _mobileInChat = false;
+
+    function isMobile() {
+        return window.innerWidth < 768;
+    }
+
+    function applyMobileState() {
+        const sidebar = document.querySelector('.chat-sidebar');
+        const content = document.querySelector('.chat-content');
+        if (!sidebar || !content) return;
+
+        if (isMobile() && _mobileInChat) {
+            sidebar.classList.add('hidden-mobile');
+            content.classList.add('mobile-active');
+        } else {
+            sidebar.classList.remove('hidden-mobile');
+            content.classList.remove('mobile-active');
+        }
+    }
+
+    // ✅ الطريقة الصحيحة في Livewire v3 — بتشتغل بعد كل request (sendMessage, selectChat, إلخ)
+    document.addEventListener('DOMContentLoaded', function() {
+        Livewire.hook('commit', ({ succeed }) => {
+            succeed(() => queueMicrotask(applyMobileState));
+        });
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
 
-        // =========================
-        // STORY VIEWER (CLEAN VERSION)
-        // =========================
+        // ─── Mobile Navigation ───────────────────────────────
+        window.addEventListener('chatSelected', function() {
+            _mobileInChat = true;
+            applyMobileState();
+            setTimeout(scrollToBottom, 80);
+            setTimeout(initChatInput, 100);
+            setTimeout(handleScrolling, 100);
+        });
 
+        window.addEventListener('chatClosed', function() {
+            _mobileInChat = false;
+            applyMobileState();
+        });
+
+        window.addEventListener('resize', function() {
+            if (!isMobile()) {
+                _mobileInChat = false;
+                applyMobileState();
+            }
+        });
+
+        // ─── Chat Helpers ────────────────────────────────────
+        function scrollToBottom() {
+            const box = document.querySelector('.msg-body');
+            if (!box) return;
+            requestAnimationFrame(() => box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' }));
+        }
+
+        function updateSendButton() {
+            const input = document.querySelector('.msg-input');
+            const btn   = document.querySelector('.send-btn');
+            if (!input || !btn) return;
+            const hasText = input.value.trim().length > 0;
+            btn.disabled = !hasText;
+            btn.classList.toggle('btn-disabled', !hasText);
+        }
+
+        function initChatInput() {
+            const input = document.querySelector('.msg-input');
+            const btn   = document.querySelector('.send-btn');
+            if (!input) return;
+            input.removeEventListener('input', updateSendButton);
+            input.addEventListener('input', updateSendButton);
+            updateSendButton();
+            input.focus();
+        }
+
+        function onFormSubmit() {
+            setTimeout(() => { updateSendButton(); scrollToBottom(); }, 30);
+        }
+
+        function handleScrolling() {
+            const messagesArea = document.querySelector('.msg-body');
+            if (!messagesArea || messagesArea._scrollBound) return;
+            messagesArea._scrollBound = true;
+            messagesArea.addEventListener('scroll', () => {
+                if (messagesArea.scrollTop === 0) {
+                    setTimeout(() => Livewire.dispatch('loadMoreMessages'), 20);
+                }
+            });
+        }
+
+        // ─── Livewire Events (Chat) ──────────────────────────
+        window.addEventListener('messageSent', function() {
+            applyMobileState(); // ← ضمان إضافي
+            scrollToBottom();
+            updateSendButton();
+        });
+        Livewire.on('messageSent', function() {
+            applyMobileState(); // ← ضمان إضافي
+            scrollToBottom();
+            updateSendButton();
+        });
+
+        window.addEventListener('messagesLoaded', function(event) {
+            const messagesArea = document.querySelector('.msg-body');
+            if (!messagesArea) return;
+            setTimeout(() => {
+                const previousHeight = event.detail.height;
+                const newHeight = messagesArea.scrollHeight;
+                requestAnimationFrame(() => messagesArea.scrollTo({ top: newHeight - previousHeight, behavior: 'auto' }));
+                Livewire.dispatch('resetLoadMoreTrigger', { height: messagesArea.scrollHeight });
+            }, 20);
+        });
+
+        // ─── Story Viewer ────────────────────────────────────
         let progressTimer = null;
-        const storyDuration = 10000; // 10s
+        const storyDuration = 10000;
 
         function clearProgress() {
-            if (progressTimer) {
-                clearTimeout(progressTimer);
-                progressTimer = null;
-            }
+            if (progressTimer) { clearTimeout(progressTimer); progressTimer = null; }
         }
 
         function startProgress(index) {
             clearProgress();
-
             const fill = document.getElementById('prog-' + index);
             if (!fill) return;
-
-            // reset instantly
             fill.style.transition = 'none';
             fill.style.width = '0%';
-
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    fill.style.transition = `width ${storyDuration / 1000}s linear`;
-                    fill.style.width = '100%';
-                });
-            });
-
-            progressTimer = setTimeout(() => {
-                Livewire.dispatch('nextViewerStory');
-            }, storyDuration);
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                fill.style.transition = `width ${storyDuration / 1000}s linear`;
+                fill.style.width = '100%';
+            }));
+            progressTimer = setTimeout(() => Livewire.dispatch('nextViewerStory'), storyDuration);
         }
 
-        // =========================
-        // LIVEWIRE EVENTS (STORY)
-        // =========================
+        Livewire.on('storyViewerOpened', (data) => setTimeout(() => startProgress(data.index), 80));
+        Livewire.on('storyIndexChanged',  (data) => setTimeout(() => startProgress(data.index), 50));
+        Livewire.on('storyViewerClosed',  clearProgress);
 
-        Livewire.on('storyViewerOpened', (data) => {
-            setTimeout(() => startProgress(data.index), 80);
-        });
-
-        Livewire.on('storyIndexChanged', (data) => {
-            setTimeout(() => startProgress(data.index), 50);
-        });
-
-        Livewire.on('storyViewerClosed', () => {
-            clearProgress();
-        });
-
-        // keyboard navigation
         document.addEventListener('keydown', function(e) {
             const viewer = document.getElementById('storyViewerOverlay');
             if (!viewer) return;
-
             if (e.key === 'ArrowRight') Livewire.dispatch('nextViewerStory');
-            if (e.key === 'ArrowLeft') Livewire.dispatch('prevViewerStory');
-            if (e.key === 'Escape') Livewire.dispatch('closeStoryViewer');
+            if (e.key === 'ArrowLeft')  Livewire.dispatch('prevViewerStory');
+            if (e.key === 'Escape')     Livewire.dispatch('closeStoryViewer');
         });
 
-
-        // =========================
-        // CHAT UI HELPERS
-        // =========================
-
-        function scrollToBottom() {
-            const box = document.querySelector(".msg-body");
-            if (!box) return;
-
-            requestAnimationFrame(() => {
-                box.scrollTo({
-                    top: box.scrollHeight,
-                    behavior: "smooth"
-                });
-            });
-        }
-
-        function updateSendButton() {
-            const input = document.querySelector(".msg-input");
-            const btn = document.querySelector(".send-btn");
-            if (!input || !btn) return;
-
-            const hasText = input.value && input.value.trim().length > 0;
-
-            btn.disabled = !hasText;
-            btn.classList.toggle("btn-disabled", !hasText);
-        }
-
-        function initChatInput() {
-            const input = document.querySelector(".msg-input");
-            const form = document.querySelector(".msg-footer");
-
-            if (!input || !form) return;
-
-            input.addEventListener("input", updateSendButton);
-
-            form.addEventListener("submit", () => {
-                setTimeout(scrollToBottom, 30);
-            });
-
-            updateSendButton();
-        }
-
-        function handleChatSelected() {
-            setTimeout(() => {
-                initChatInput();
-                scrollToBottom();
-            }, 80);
-        }
-
-        // =========================
-        // LIVEWIRE EVENTS (CHAT)
-        // =========================
-
-        window.addEventListener("chatSelected", handleChatSelected);
-        window.addEventListener("messageSent", scrollToBottom);
-
-        Livewire.on("messageSent", scrollToBottom);
-
-    });
-    document.addEventListener("DOMContentLoaded", function() {
-
-        // Handle mobile view for chat selection
-        window.addEventListener("chatSelected", handleChatSelection);
-
-        // Listen for message sent event to scroll to bottom
-        window.addEventListener("messageSent", handleMessageSent);
-
-        // Listen for messages loaded more event to maintain scroll position
-        window.addEventListener('messagesLoaded', handleLoadingMore);
-
-        // Handle message input and send button
-        function handleInput() {
-            let messageForm = document.querySelector(".msg-footer");
-            let messageInput = document.querySelector(".msg-input");
-
-            if (messageForm && messageInput) {
-                messageInput.focus();
-                updateBtn();
-                messageInput.addEventListener('input', updateBtn);
-                messageForm.addEventListener('submit', e => {
-                    e.preventDefault();
-                    messageInput.value = '';
-                    messageInput.focus();
-                    updateBtn();
-                    scrollToBottom();
-                });
-            }
-        }
-
-        // Update send button state
-        function updateBtn() {
-            let sendButton = document.querySelector(".send-btn");
-            let messageInput = document.querySelector(".msg-input");
-            if (!sendButton || !messageInput) return;
-
-            const hasText = v => v && v.trim().length > 0;
-            sendButton.disabled = !hasText(messageInput.value);
-            sendButton.classList.toggle('btn-disabled', sendButton.disabled);
-        }
-
-        // Handle scrolling in messages area for loading more messages
-        function handleScrolling() {
-            let messagesArea = document.querySelector(".msg-body");
-            let loadMoreIndicator = document.querySelector(".load-more-indicator");
-            if (!messagesArea) return;
-
-            messagesArea.addEventListener("scroll", () => {
-                if (messagesArea.scrollTop === 0) {
-                    if (loadMoreIndicator) loadMoreIndicator.classList.remove("hidden");
-                    setTimeout(() => {
-                        Livewire.dispatch('loadMoreMessages');
-                    }, 20);
-                }
-            });
-        }
-
-        // Handle loading more messages to maintain scroll position
-        function handleLoadingMore(event) {
-            let messagesArea = document.querySelector(".msg-body");
-            let loadMoreIndicator = document.querySelector(".load-more-indicator");
-            if (messagesArea) {
-                setTimeout(() => {
-                    const previousHeight = event.detail.height;
-                    const newHeight = messagesArea.scrollHeight;
-                    requestAnimationFrame(() => {
-                        messagesArea.scrollTo({
-                            top: newHeight - previousHeight,
-                            behavior: "auto",
-                        });
-                    });
-                    if (loadMoreIndicator) loadMoreIndicator.classList.add("hidden");
-
-                    Livewire.dispatch('resetLoadMoreTrigger', {
-                        height: messagesArea.scrollHeight
-                    });
-                }, 20);
-            }
-        }
-
-        // Function to scroll to bottom of messages
-        function scrollToBottom() {
-            let messagesArea = document.querySelector(".msg-body");
-            if (messagesArea) {
-                requestAnimationFrame(() => {
-                    messagesArea.scrollTo({
-                        top: messagesArea.scrollHeight,
-                        behavior: "smooth",
-                    });
-                });
-            }
-        }
-
-        // Handle back button
-        function handleBackButton() {
-            let backButton = document.querySelector(".back-button");
-            if (!backButton) return;
-
-            let chatArea = document.querySelector(".chat-content");
-            let leftSidebar = document.querySelector(".chat-sidebar");
-            backButton.addEventListener("click", () => {
-                if (window.innerWidth < 768) {
-                    leftSidebar.style.display = "flex";
-                    chatArea.style.display = "none";
-                }
-            });
-        }
-
-        // Handle chat selection
-        function handleChatSelection(event) {
-            let chatArea = document.querySelector(".chat-content");
-            let leftSidebar = document.querySelector(".chat-sidebar");
-            if (window.innerWidth < 768) {
-                leftSidebar.style.display = "none";
-                chatArea.style.display = "flex";
-            }
-
-            setTimeout(() => {
-                let messagesArea = document.querySelector(".msg-body");
-                let messageInput = document.querySelector(".msg-input");
-                if (messagesArea && messageInput) {
-                    const height = messagesArea.scrollHeight;
-                    messagesArea.scrollTop = height;
-
-                    handleInput();
-                    handleScrolling();
-                    handleBackButton();
-
-                    Livewire.dispatch('resetLoadMoreTrigger', {
-                        height: messagesArea.scrollHeight
-                    });
-                }
-            }, 50);
-        }
-
-        // Listen for message sent event to scroll to bottom
-        function handleMessageSent() {
-            setTimeout(() => {
-                updateBtn();
-                scrollToBottom();
-            }, 20);
-        }
     });
 </script>

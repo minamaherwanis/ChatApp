@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Verify Code | ChatApp')
+@section('title', 'Verify Code | ChatMU')
 
 @section('styles')
     <link rel="stylesheet" href="{{ asset('css/main.css') }}">
@@ -73,13 +73,23 @@
 
         @media (max-width: 520px) {
             .otp-code-grid {
-                grid-template-columns: repeat(6, minmax(2.75rem, 1fr));
+                gap: 0.5rem;
+            }
+            .otp-input {
+                min-height: 3.75rem;
+                font-size: 1.25rem;
+                border-radius: 14px;
             }
         }
 
         @media (max-width: 420px) {
             .otp-code-grid {
-                grid-template-columns: repeat(6, minmax(2.4rem, 1fr));
+                gap: 0.4rem;
+            }
+            .otp-input {
+                min-height: 3.5rem;
+                font-size: 1.15rem;
+                border-radius: 12px;
             }
         }
     </style>
@@ -90,7 +100,7 @@
         <section class="login-panel otp-panel">
             <div class="brand">
                 <span class="brand-mark">Chat</span>
-                <span class="brand-name">Flow</span>
+                <span class="brand-name">MU</span>
             </div>
 
             <div>

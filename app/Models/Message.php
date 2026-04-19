@@ -35,4 +35,17 @@ class Message extends Model
             return $lastMessageAt->format('M d, Y');
         }
     }
+    public function setContentAttribute(string $value): void
+    {
+        $this->attributes['content'] = encrypt($value);
+    }
+
+    public function getContentAttribute(string $value): string
+    {
+        try {
+            return decrypt($value);
+        } catch (\Exception $e) {
+            return $value;
+        }
+    }
 }

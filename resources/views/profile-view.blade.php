@@ -7,7 +7,10 @@
 @section('title', 'Chats | Profile')
 
 @section('styles')
-    </style>
+    
+    @vite(['resources/css/profile.css'])
+
+
 @endsection
 
 @section('content')
