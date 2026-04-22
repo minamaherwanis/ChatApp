@@ -80,15 +80,19 @@ class AuthController extends Controller
 
     private function sendOtpSms($phone, $otp)
     {
-        $response = Http::withBasicAuth(
-            env('VONAGE_API_KEY'),
-            env('VONAGE_API_SECRET')
-        )->post('https://api.nexmo.com/v1/messages', [
-            "to" => $phone,
-            "from" => "ChatAPP",
-            "channel" => "sms",
-            "message_type" => "text",
-            "text" => "Your OTP is: " . $otp
+        $phone = str_replace('+', '', $phone);
+
+        $response = Http::post('https://www.am-sender.com/api/sender', [
+            "message" => "Your OTP is: " . $otp,
+            "delay_time" => 0,
+            "add_to_end" => false,
+            "auth_key" => env('AMSENDER_API_KEY'),
+            "receivers" => [
+                $phone
+            ],
+            "device_ids" => [
+                env('DEVICE_API_ID')
+            ]
         ]);
 
         return $response->successful();
