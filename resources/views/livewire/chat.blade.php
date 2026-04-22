@@ -491,25 +491,6 @@
 
 </div>
 
-@if ($storyImage)
-    <div class="story-preview-overlay">
-        <div class="story-preview-box">
-
-            <img src="{{ $storyImage->temporaryUrl() }}" class="preview-img">
-
-            <div class="preview-actions">
-                <button class="cancel-btn" wire:click="$set('storyImage', null)">
-                    Cancel
-                </button>
-
-                <button class="send-story" wire:click="uploadStory">
-                    Upload
-                </button>
-            </div>
-
-        </div>
-    </div>
-@endif
 
 
 <script>
