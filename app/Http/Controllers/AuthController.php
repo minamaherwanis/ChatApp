@@ -63,7 +63,7 @@ class AuthController extends Controller
                 ]);
             }
 
-            $this->sendOtpSms($formatted, $otpCode);
+            //$this->sendOtpSms($formatted, $otpCode);
 
 
             $request->session()->put('auth_phone', $formatted);

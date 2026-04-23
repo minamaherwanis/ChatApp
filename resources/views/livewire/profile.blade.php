@@ -15,7 +15,9 @@
                         <img src="{{ asset('storage/' . $profile->avatar) }}?v={{ time() }}"
                             wire:key="avatar-{{ $profile->avatar }}" alt="profile">
                     @else
-                        <span>{{ strtoupper(substr($profile?->name ?? $user->name, 0, 1)) }}</span>
+                        <div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#4fa2ff,#1a6fd4);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff;letter-spacing:1px;">
+    {{ strtoupper(substr($profile?->name ?? $user->name, 0, 2)) }}
+</div>
                     @endif
                 </div>
                 <div class="change-avatar-btn" onclick="document.getElementById('avatarInput').click()">

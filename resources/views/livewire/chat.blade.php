@@ -228,8 +228,21 @@
                         <div class="sheet-body">
                             @forelse($storyViewers as $view)
                                 <div class="viewer-item">
-                                    <img
-                                        src="{{ $view->profile->avatar ? asset('storage/' . $view->profile->avatar) : asset('default.png') }}" />
+                                    @if ($view->profile->avatar)
+                                        <img src="{{ asset('storage/' . $view->profile->avatar) }}"
+                                            alt="{{ $view->profile->username }}" />
+                                    @else
+                                        <div
+                                            style="
+            width: 40px; height: 40px; border-radius: 50%;
+            background: linear-gradient(135deg, #4fa2ff, #1a6fd4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: 700; color: #fff;
+            flex-shrink: 0;
+        ">
+                                            {{ strtoupper(substr($view->profile->username ?? '?', 0, 2)) }}
+                                        </div>
+                                    @endif
                                     <div>
                                         <div class="name">{{ $view->profile->name }}</div>
                                         <div class="time">{{ $view->viewed_at->diffForHumans() }}</div>
@@ -381,64 +394,55 @@
                     </div>
 
                     {{-- Messages --}}
-                    <div class="msg-body" id="msgBody">
-
-
-                        @if ($messages)
-                            @foreach ($messages as $message)
-                                @if (!$message->isSender())
-                                    <div class="msg-row msg-theirs">
-                                        <div class="chat-avatar msg-avatar"
-                                            style="width:32px;height:32px;font-size:0.7rem;background:#1e5ba5;flex-shrink:0;">
-                                            @if ($selectedUser->profile->avatar)
-                                                <img src="{{ asset('storage/' . $selectedUser->profile->avatar) }}"
-                                                    alt="{{ $selectedUser->profile->username }}"
-                                                    style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
-                                            @else
-                                                {{ strtoupper(substr($selectedUser->profile->username, 0, 2)) }}
-                                            @endif
-                                        </div>
-                                        <div class="msg-bubble-wrap">
-                                            <div class="msg-bubble bubble-theirs">{{ $message->content }}</div>
-                                            <span class="msg-time">{{ $message->created_at }}</span>
-                                        </div>
-                                    </div>
-                                @else
-                                    <div class="msg-row msg-mine">
-                                        <div class="msg-bubble-wrap">
-                                            <div class="msg-bubble bubble-mine">{{ $message->content }}</div>
-                                            <div style="display: flex; align-items: center; gap: 3px;">
-                                                <span class="msg-time">{{ $message->created_at }}</span>
-                                                @if ($message->is_read)
-                                                    <svg class="w-3 h-3 sm:w-4 sm:h-4 text-cyan-400"
-                                                        fill="currentColor" viewBox="0 0 20 20">
-                                                        <path
-                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z">
-                                                        </path>
-                                                    </svg>
-                                                    <svg class="w-3 h-3 sm:w-4 sm:h-4 text-cyan-400 -ml-2"
-                                                        fill="currentColor" viewBox="0 0 20 20">
-                                                        <path
-                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z">
-                                                        </path>
-                                                    </svg>
-                                                @else
-                                                    <svg class="w-3 h-3 sm:w-4 sm:h-4 text-zinc-500"
-                                                        fill="currentColor" viewBox="0 0 20 20">
-                                                        <path
-                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z">
-                                                        </path>
-                                                    </svg>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-
+<div class="msg-body" id="msgBody">
+    @if ($messages)
+        @foreach ($messages as $message)
+            @if (!$message->isSender())
+                <div class="msg-row msg-theirs">
+                    <div class="chat-avatar msg-avatar"
+                        style="width:32px;height:32px;font-size:0.7rem;background:#1e5ba5;flex-shrink:0;">
+                        @if ($selectedUser->profile->avatar)
+                            <img src="{{ asset('storage/' . $selectedUser->profile->avatar) }}"
+                                alt="{{ $selectedUser->profile->username }}"
+                                style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                        @else
+                            {{ strtoupper(substr($selectedUser->profile->username, 0, 2)) }}
                         @endif
-
                     </div>
+                    <div class="msg-bubble-wrap">
+                        <div class="msg-bubble bubble-theirs">{{ $message->content }}</div>
+                        <span class="msg-time" style="white-space:nowrap;">
+                            {{ \Carbon\Carbon::parse($message->created_at)->format('g:i A') }}
+                        </span>
+                    </div>
+                </div>
+            @else
+                <div class="msg-row msg-mine">
+                    <div class="msg-bubble-wrap">
+                        <div class="msg-bubble bubble-mine">{{ $message->content }}</div>
+                        <div style="display:flex;align-items:center;gap:3px;justify-content:flex-end;white-space:nowrap;">
+                            <span class="msg-time" style="white-space:nowrap;">
+                                {{ \Carbon\Carbon::parse($message->created_at)->format('g:i A') }}
+                            </span>
+                            @if ($message->is_read)
+                                <svg width="14" height="14" fill="#4fa2ff" viewBox="0 0 20 20">
+                                    <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                                </svg>
+                                <svg width="14" height="14" fill="#4fa2ff" viewBox="0 0 20 20" style="margin-left:-6px;">
+                                    <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                                </svg>
+                            @else
+                                <svg width="14" height="14" fill="#888" viewBox="0 0 20 20">
+                                    <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                                </svg>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endif
+        @endforeach
+    @endif
+</div>
 
 
                     {{-- Input --}}
@@ -463,17 +467,18 @@
                                 <polygon points="22 2 15 22 11 13 2 9 22 2" />
                             </svg>
                         </button>
-                </div>
-            @else
-                <div
-                    style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;padding:2rem;">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">💬</div>
-                        <h2>Select a chat</h2>
-                        <p>Choose a conversation from the sidebar to start messaging. Or create a new chat to connect
-                            with friends.</p>
                     </div>
-                </div>
+                @else
+                    <div
+                        style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;padding:2rem;">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">💬</div>
+                            <h2>Select a chat</h2>
+                            <p>Choose a conversation from the sidebar to start messaging. Or create a new chat to
+                                connect
+                                with friends.</p>
+                        </div>
+                    </div>
             @endif
         @else
             <div
@@ -519,7 +524,9 @@
 
     // ✅ الطريقة الصحيحة في Livewire v3 — بتشتغل بعد كل request (sendMessage, selectChat, إلخ)
     document.addEventListener('DOMContentLoaded', function() {
-        Livewire.hook('commit', ({ succeed }) => {
+        Livewire.hook('commit', ({
+            succeed
+        }) => {
             succeed(() => queueMicrotask(applyMobileState));
         });
     });
@@ -551,12 +558,15 @@
         function scrollToBottom() {
             const box = document.querySelector('.msg-body');
             if (!box) return;
-            requestAnimationFrame(() => box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' }));
+            requestAnimationFrame(() => box.scrollTo({
+                top: box.scrollHeight,
+                behavior: 'smooth'
+            }));
         }
 
         function updateSendButton() {
             const input = document.querySelector('.msg-input');
-            const btn   = document.querySelector('.send-btn');
+            const btn = document.querySelector('.send-btn');
             if (!input || !btn) return;
             const hasText = input.value.trim().length > 0;
             btn.disabled = !hasText;
@@ -565,7 +575,7 @@
 
         function initChatInput() {
             const input = document.querySelector('.msg-input');
-            const btn   = document.querySelector('.send-btn');
+            const btn = document.querySelector('.send-btn');
             if (!input) return;
             input.removeEventListener('input', updateSendButton);
             input.addEventListener('input', updateSendButton);
@@ -574,7 +584,10 @@
         }
 
         function onFormSubmit() {
-            setTimeout(() => { updateSendButton(); scrollToBottom(); }, 30);
+            setTimeout(() => {
+                updateSendButton();
+                scrollToBottom();
+            }, 30);
         }
 
         function handleScrolling() {
@@ -606,8 +619,13 @@
             setTimeout(() => {
                 const previousHeight = event.detail.height;
                 const newHeight = messagesArea.scrollHeight;
-                requestAnimationFrame(() => messagesArea.scrollTo({ top: newHeight - previousHeight, behavior: 'auto' }));
-                Livewire.dispatch('resetLoadMoreTrigger', { height: messagesArea.scrollHeight });
+                requestAnimationFrame(() => messagesArea.scrollTo({
+                    top: newHeight - previousHeight,
+                    behavior: 'auto'
+                }));
+                Livewire.dispatch('resetLoadMoreTrigger', {
+                    height: messagesArea.scrollHeight
+                });
             }, 20);
         });
 
@@ -616,7 +634,10 @@
         const storyDuration = 10000;
 
         function clearProgress() {
-            if (progressTimer) { clearTimeout(progressTimer); progressTimer = null; }
+            if (progressTimer) {
+                clearTimeout(progressTimer);
+                progressTimer = null;
+            }
         }
 
         function startProgress(index) {
@@ -633,15 +654,15 @@
         }
 
         Livewire.on('storyViewerOpened', (data) => setTimeout(() => startProgress(data.index), 80));
-        Livewire.on('storyIndexChanged',  (data) => setTimeout(() => startProgress(data.index), 50));
-        Livewire.on('storyViewerClosed',  clearProgress);
+        Livewire.on('storyIndexChanged', (data) => setTimeout(() => startProgress(data.index), 50));
+        Livewire.on('storyViewerClosed', clearProgress);
 
         document.addEventListener('keydown', function(e) {
             const viewer = document.getElementById('storyViewerOverlay');
             if (!viewer) return;
             if (e.key === 'ArrowRight') Livewire.dispatch('nextViewerStory');
-            if (e.key === 'ArrowLeft')  Livewire.dispatch('prevViewerStory');
-            if (e.key === 'Escape')     Livewire.dispatch('closeStoryViewer');
+            if (e.key === 'ArrowLeft') Livewire.dispatch('prevViewerStory');
+            if (e.key === 'Escape') Livewire.dispatch('closeStoryViewer');
         });
 
     });
