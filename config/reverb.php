@@ -35,8 +35,8 @@ return [
             'hostname' => env('REVERB_HOST'),
             'options' => [
                 'tls' => [
-                    'local_cert'  => 'C:/laragon/etc/ssl/laragon.crt',
-                    'local_pk'    => 'C:/laragon/etc/ssl/laragon.key',
+                    'local_cert' => 'C:/laragon/etc/ssl/laragon.crt',
+                    'local_pk' => 'C:/laragon/etc/ssl/laragon.key',
                     'verify_peer' => false,
                 ],
             ],
@@ -80,13 +80,13 @@ return [
                 'key' => env('REVERB_APP_KEY'),
                 'secret' => env('REVERB_APP_SECRET'),
                 'app_id' => env('REVERB_APP_ID'),
-'options' => [
-    'host' => env('REVERB_HOST'),
-    'port' => env('REVERB_PORT', 8080),
-    'scheme' => env('REVERB_SCHEME', 'https'),
-    'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
-    'verify_peer' => false,  
-],
+                'options' => [
+                    'host' => env('REVERB_HOST'),
+                    'port' => env('REVERB_PORT', 8080),
+                    'scheme' => env('REVERB_SCHEME', 'https'),
+                    'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
+                    'verify_peer' => false,
+                ],
                 'allowed_origins' => ['*'],
                 'ping_interval' => env('REVERB_APP_PING_INTERVAL', 60),
                 'activity_timeout' => env('REVERB_APP_ACTIVITY_TIMEOUT', 30),
@@ -94,7 +94,6 @@ return [
                 'max_message_size' => env('REVERB_APP_MAX_MESSAGE_SIZE', 10_000),
             ],
         ],
-
 
     ],
 
