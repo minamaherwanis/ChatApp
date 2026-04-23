@@ -63,7 +63,7 @@ class AuthController extends Controller
                 ]);
             }
 
-            //$this->sendOtpSms($formatted, $otpCode);
+            $this->sendOtpSms($formatted, $otpCode);
 
 
             $request->session()->put('auth_phone', $formatted);
@@ -167,7 +167,7 @@ class AuthController extends Controller
             ]);
         }
 
-        //$this->sendOtpSms(session('auth_phone'), $otpCode);
+        $this->sendOtpSms(session('auth_phone'), $otpCode);
 
         return response()->json(['message' => 'OTP resent successfully']);
     }
