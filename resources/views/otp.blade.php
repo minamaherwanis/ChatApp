@@ -7,6 +7,25 @@
     <script src="https://www.google.com/recaptcha/api.js?render={{ env('RECAPTCHA_SITE_KEY') }}"></script>
 
     <style>
+        /* ── Override login-panel للموبايل ── */
+        .login-shell {
+            padding: clamp(1rem, 5vw, 2rem);
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .login-panel {
+            width: 100% !important;
+            max-width: 480px !important;
+            min-width: unset !important;
+            box-sizing: border-box !important;
+            overflow: hidden;
+        }
+
+        /* ── OTP Panel ── */
         .otp-panel {
             display: grid;
             gap: 1.5rem;
@@ -15,23 +34,28 @@
         .otp-intro {
             color: var(--muted);
             line-height: 1.8;
-            max-width: 42ch;
+            max-width: 100%;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
+        /* ── OTP Grid ── */
         .otp-code-grid {
             display: grid;
-            grid-template-columns: repeat(6, minmax(3rem, 1fr));
-            gap: 0.8rem;
+            grid-template-columns: repeat(6, 1fr);
+            gap: clamp(0.3rem, 2vw, 0.8rem);
+            width: 100%;
         }
 
         .otp-input {
             width: 100%;
-            min-height: 4.25rem;
-            border-radius: 18px;
+            aspect-ratio: 1 / 1.1;
+            min-height: unset;
+            border-radius: clamp(10px, 3vw, 18px);
             border: 1px solid var(--border);
             background: #15263d;
             color: var(--text);
-            font-size: 1.5rem;
+            font-size: clamp(0.9rem, 5vw, 1.5rem);
             font-weight: 700;
             text-align: center;
             outline: none;
@@ -43,12 +67,13 @@
             box-shadow: 0 0 0 4px rgba(79, 162, 255, 0.18);
         }
 
+        /* ── Actions ── */
         .otp-actions {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
-            gap: 1rem;
+            gap: 0.75rem;
         }
 
         .otp-secondary {
@@ -59,6 +84,7 @@
             cursor: pointer;
             padding: 0;
             font-size: 0.95rem;
+            white-space: nowrap;
         }
 
         .otp-secondary:disabled {
@@ -68,30 +94,17 @@
 
         .otp-status {
             color: var(--muted);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
-        @media (max-width: 520px) {
-            .otp-code-grid {
-                gap: 0.5rem;
-            }
-            .otp-input {
-                min-height: 3.75rem;
-                font-size: 1.25rem;
-                border-radius: 14px;
-            }
-        }
-
-        @media (max-width: 420px) {
-            .otp-code-grid {
-                gap: 0.4rem;
-            }
-            .otp-input {
-                min-height: 3.5rem;
-                font-size: 1.15rem;
-                border-radius: 12px;
-            }
-        }
+        /* ── reCAPTCHA badge ── */
+        /* .grecaptcha-badge {
+            transform: scale(0.8) !important;
+            transform-origin: bottom right !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            opacity: 0.7;
+        } */
     </style>
 @endsection
 
@@ -112,7 +125,7 @@
 
             <form class="login-form" action="{{ route('login.otp') }}" method="POST" id="otpForm">
                 @csrf
-                {{-- <input type="hidden" name="g-recaptcha-response" id="recaptcha_token"> --}}        
+                {{-- <input type="hidden" name="g-recaptcha-response" id="recaptcha_token"> --}}
                 <input type="hidden" name="code" id="otp_code">
                 <div class="otp-code-grid">
                     <input class="otp-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
@@ -145,128 +158,128 @@
 @endsection
 
 @section('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const inputs = document.querySelectorAll('.otp-input');
-    const form = document.getElementById('otpForm');
-    const hiddenCode = document.getElementById('otp_code');
-    const resendButton = document.getElementById('resendButton');
-    const otpStatus = document.getElementById('otpStatus');
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('.otp-input');
+            const form = document.getElementById('otpForm');
+            const hiddenCode = document.getElementById('otp_code');
+            const resendButton = document.getElementById('resendButton');
+            const otpStatus = document.getElementById('otpStatus');
 
-    const TIMER_KEY = 'otp_timer_end';
-    let timer;
+            const TIMER_KEY = 'otp_timer_end';
+            let timer;
 
-    // ===== Timer =====
-    function getRemainingTime() {
-        const endTime = localStorage.getItem(TIMER_KEY);
-        if (!endTime) return 0;
-        const remaining = Math.ceil((Number(endTime) - Date.now()) / 1000);
-        return remaining > 0 ? remaining : 0;
-    }
-
-    function updateTimer() {
-        const remaining = getRemainingTime();
-
-        if (remaining > 0) {
-            resendButton.textContent = `Resend code in ${remaining}s`;
-            resendButton.disabled = true;
-            otpStatus.textContent = 'Please wait before requesting a new code.';
-        } else {
-            resendButton.textContent = 'Resend code';
-            resendButton.disabled = false;
-            otpStatus.textContent = 'You can resend the code now.';
-            localStorage.removeItem(TIMER_KEY);
-        }
-    }
-
-    function startTimer(seconds = 30) {
-        const endTime = Date.now() + seconds * 1000;
-        localStorage.setItem(TIMER_KEY, endTime);
-        updateTimer();
-
-        clearInterval(timer);
-        timer = setInterval(updateTimer, 1000);
-    }
-
-    // start on load if exists
-    if (getRemainingTime() > 0) {
-        timer = setInterval(updateTimer, 1000);
-        updateTimer();
-    } else {
-        updateTimer();
-    }
-
-    resendButton.addEventListener('click', () => {
-        if (resendButton.disabled) return;
-        startTimer(30);
-        otpStatus.textContent = 'A new code has been sent. Check your messages.';
-    });
-
-    // ===== OTP Inputs =====
-    inputs.forEach((input, index) => {
-
-        input.addEventListener('input', () => {
-            const value = input.value.replace(/\D/g, '');
-            input.value = value;
-
-            if (value && index < inputs.length - 1) {
-                inputs[index + 1].focus();
+            // ===== Timer =====
+            function getRemainingTime() {
+                const endTime = localStorage.getItem(TIMER_KEY);
+                if (!endTime) return 0;
+                const remaining = Math.ceil((Number(endTime) - Date.now()) / 1000);
+                return remaining > 0 ? remaining : 0;
             }
 
-            // auto submit
-            if (value && index === inputs.length - 1) {
-                submitOtp();
-            }
-        });
+            function updateTimer() {
+                const remaining = getRemainingTime();
 
-        input.addEventListener('keydown', (event) => {
-            if (event.key === 'Backspace' && !input.value && index > 0) {
-                inputs[index - 1].focus();
+                if (remaining > 0) {
+                    resendButton.textContent = `Resend code in ${remaining}s`;
+                    resendButton.disabled = true;
+                    otpStatus.textContent = 'Please wait before requesting a new code.';
+                } else {
+                    resendButton.textContent = 'Resend code';
+                    resendButton.disabled = false;
+                    otpStatus.textContent = 'You can resend the code now.';
+                    localStorage.removeItem(TIMER_KEY);
+                }
             }
-        });
 
-        input.addEventListener('paste', (e) => {
-            const paste = e.clipboardData.getData('text').replace(/\D/g, '');
-            if (paste.length === 6) {
-                inputs.forEach((inputField, i) => {
-                    inputField.value = paste[i] || '';
+            function startTimer(seconds = 30) {
+                const endTime = Date.now() + seconds * 1000;
+                localStorage.setItem(TIMER_KEY, endTime);
+                updateTimer();
+
+                clearInterval(timer);
+                timer = setInterval(updateTimer, 1000);
+            }
+
+            // start on load if exists
+            if (getRemainingTime() > 0) {
+                timer = setInterval(updateTimer, 1000);
+                updateTimer();
+            } else {
+                updateTimer();
+            }
+
+            resendButton.addEventListener('click', () => {
+                if (resendButton.disabled) return;
+                startTimer(30);
+                otpStatus.textContent = 'A new code has been sent. Check your messages.';
+            });
+
+            // ===== OTP Inputs =====
+            inputs.forEach((input, index) => {
+
+                input.addEventListener('input', () => {
+                    const value = input.value.replace(/\D/g, '');
+                    input.value = value;
+
+                    if (value && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+
+                    // auto submit
+                    if (value && index === inputs.length - 1) {
+                        submitOtp();
+                    }
                 });
-                submitOtp();
+
+                input.addEventListener('keydown', (event) => {
+                    if (event.key === 'Backspace' && !input.value && index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                });
+
+                input.addEventListener('paste', (e) => {
+                    const paste = e.clipboardData.getData('text').replace(/\D/g, '');
+                    if (paste.length === 6) {
+                        inputs.forEach((inputField, i) => {
+                            inputField.value = paste[i] || '';
+                        });
+                        submitOtp();
+                    }
+                });
+            });
+
+            function submitOtp() {
+                let code = '';
+                inputs.forEach(input => code += input.value);
+
+                if (code.length === 6) {
+                    hiddenCode.value = code;
+                    form.submit();
+                }
             }
+
+            // ===== Form Submit =====
+            form.addEventListener('submit', function(e) {
+                let code = '';
+                inputs.forEach(input => code += input.value);
+
+                if (code.length < 6) {
+                    e.preventDefault();
+                    otpStatus.textContent = 'Enter full verification code';
+                    return;
+                }
+
+                hiddenCode.value = code;
+            });
+
+            // ===== reCAPTCHA =====
+            // grecaptcha.ready(function() {
+            //     grecaptcha.execute("{{ env('RECAPTCHA_SITE_KEY') }}", { action: 'submit' })
+            //         .then(function(token) {
+            //             document.getElementById('recaptcha_token').value = token;
+            //         });
+            // });
         });
-    });
-
-    function submitOtp() {
-        let code = '';
-        inputs.forEach(input => code += input.value);
-
-        if (code.length === 6) {
-            hiddenCode.value = code;
-            form.submit();
-        }
-    }
-
-    // ===== Form Submit =====
-    form.addEventListener('submit', function(e) {
-        let code = '';
-        inputs.forEach(input => code += input.value);
-
-        if (code.length < 6) {
-            e.preventDefault();
-            otpStatus.textContent = 'Enter full verification code';
-            return;
-        }
-
-        hiddenCode.value = code;
-    });
-
-    // ===== reCAPTCHA =====
-    // grecaptcha.ready(function() {
-    //     grecaptcha.execute("{{ env('RECAPTCHA_SITE_KEY') }}", { action: 'submit' })
-    //         .then(function(token) {
-    //             document.getElementById('recaptcha_token').value = token;
-    //         });
-    // });
-});
-</script>
+    </script>
 @endsection
